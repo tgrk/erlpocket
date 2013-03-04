@@ -1,0 +1,8 @@
+{application,erlpocket,
+             [{description,"Erlang library for Pocket API"},
+              {vsn,"0.1"},
+              {registered,[]},
+              {applications,[stdlib,kernel,sasl,crypto,public_key,ssl,inets,
+                             jiffy,reloader]},
+              {modules,[erlpocket]},
+              {env,[]}]}.
