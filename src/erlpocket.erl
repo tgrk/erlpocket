@@ -1,7 +1,7 @@
 %%%----------------------------------------------------------------------------
 %%% @author Martin Wiso <tajgur@gmai.com>
 %%% @doc
-%%% Erlang librafy for Pocket API - http://getpocket.com/developer/docs/
+%%% Erlang library for Pocket API - http://getpocket.com/developer/docs/
 %%% @end
 %%% Created : 25 Feb 2013 by Martin Wiso <tajgur@gmail.com>
 %%%----------------------------------------------------------------------------
@@ -14,27 +14,29 @@
          authorize/2,
 
          get_stats/2,
-
-         get_unreaded/3,
-         get_archive/3,
-         get_favourite/3,
-         get_by_tag/4,
          get/3,
-
+         get_items/3,
          add/6,
          add/3,
 
-
-         start/0
+         test/0,
+         start/0,
+         stop/0
         ]).
 
--define(APP, erlpocket).
+-define(DEPS, [crypto, public_key, ssl, inets, jiffy, erlpocket]).
 -define(BASE_URL, "https://getpocket.com/").
-
 
 %%%============================================================================
 %%% API
 %%%============================================================================
+test() ->
+    Keys = read_api_keys(),
+    erlpocket:get_stats(
+      proplists:get_value(consumer_key, Keys),
+      proplists:get_value(access_token, Keys)
+     ).
+
 request_token(ConsumerKey, RedirectUri) ->
     call_api(
       get_url(request_token),
@@ -56,106 +58,80 @@ authorize(ConsumerKey, Code) ->
       params
      ).
 
-get_unreaded(ConsumerKey, AccessToken, Query) ->
-    get(ConsumerKey,
-        AccessToken,
-        lists:append([{state, <<"unread">>}], Query)
-       ).
-
-get_archive(ConsumerKey, AccessToken, Query) ->
-    get(ConsumerKey,
-        AccessToken,
-        lists:append([{state, <<"archive">>}], Query)
-       ).
-
-get_favourite(ConsumerKey, AccessToken, Query) ->
-    get(ConsumerKey,
-        AccessToken,
-        lists:append([{favourite, <<"1">>}], Query)
-       ).
-
-get_stats(ConsumerKey, AccessToken) ->
-    All = get_items(ConsumerKey, AccessToken, [{state, <<"all">>}]),
-    Output = [{total_archive,  <<"state">>, <<"archive">>},
-              {total_favorites, <<"favorite">>, <<"1">>},
-              {total_acticles, <<"is_article">>, <<"0">>},
-              {total_videos, <<"has_video">>, <<"0">>}
-             ],
-    lists:append(
-      [
-       [{total_items, length(All)}],
-       filter_stats_items(All, Output)
-      ]
-     ).
-
-get_by_tag(ConsumerKey, AccessToken, TagName, Query) ->
-    get(ConsumerKey,
-        AccessToken,
-        lists:append([{tag, TagName}], Query)
-       ).
-
 get(ConsumerKey, AccessToken, Query) ->
     Json = get_json(ConsumerKey, AccessToken, Query),
     case call_api(get_url(retrieve), Json, json) of
-        {ok, JsonResp} -> JsonResp;
+        {ok, JsonResp} ->
+            {ok, JsonResp};
         {Other, Reason} ->
             {error, {unable_to_get, Other, Reason}}
     end.
 
+get_items(ConsumerKey, AccessToken, Filter) ->
+    {ok, {[{<<"status">>,   1},
+           {<<"complete">>, 1},
+           {<<"list">>,     {Items}},
+           {<<"since">>,    _Since}
+          ]}} = get(ConsumerKey, AccessToken, Filter),
+    Items.
+
+get_stats(ConsumerKey, AccessToken) ->
+    Templates = [
+                 {total_items,    [{state,       all}]},
+                 {total_unread,   [{state,       unread}]},
+                 {total_archive,  [{state,       archive}]},
+                 {total_favorite, [{favourite,   1}]},
+                 {total_articles, [{contentType, article}]},
+                 {total_videos,   [{contentType, video}]}
+                ],
+    lists:map(fun({Type, Params}) ->
+                      Items = get_items(ConsumerKey,
+                                        AccessToken,
+                                        lists:append(
+                                          Params,
+                                          [{detailType, simple}]
+                                         )
+                                       ),
+                      {Type, length(Items)}
+              end,
+              Templates
+             ).
+
 add(ConsumerKey, AccessToken, Url, Title, Tags, TweetId) ->
-    Query = [{url,      to_bin(Url)},
-             {title,    to_bin(Title)},
-             {tags,     to_bin(Tags)},
-             {tweet_id, to_bin(TweetId)}
-            ],
-    add(ConsumerKey, AccessToken, Query).
+    add(ConsumerKey,
+        AccessToken,
+        [{url,      to_bin(Url)},
+         {title,    to_bin(Title)},
+         {tags,     to_bin(Tags)},
+         {tweet_id, to_bin(TweetId)}
+        ]
+       ).
 
 add(ConsumerKey, AccessToken, Query) ->
     Json = get_json(ConsumerKey, AccessToken, Query),
     case call_api(get_url(add), Json, json) of
-        {ok, JsonResp} -> JsonResp;
+        {ok, JsonResp} ->
+            {ok, JsonResp};
         {Other, Reason} ->
             {error, {unable_to_add, Other, Reason}}
     end.
 
 
 start() ->
-    [application:start(A) || A <- deps() ++ [?APP]],
+    [application:start(A) || A <- ?DEPS],
+    ok.
+
+stop() ->
+    [application:stop(A) || A <- ?DEPS],
     ok.
 
 
 %%%============================================================================
 %%% Internal functionality
 %%%============================================================================
-get_items(ConsumerKey, AccessToken, Filter) ->
-    {[{<<"status">>,1},
-      {<<"complete">>,1},
-      {<<"list">>, {Items}},
-      {<<"since">>, _Since}
-     ]} = get(ConsumerKey, AccessToken, Filter),
-    Items.
-
-filter_stats_items(All, Output) ->
-    lists:map(
-      fun({Name, Filter}) ->
-              {Name, get_filter_item_count(All, Filter)}
-      end, Output).
-
-get_filter_item_count(Items, {FilterName, FilterValue}) ->
-    length(
-      lists:filter(
-        fun({_Id, {List}}) ->
-                case proplists:get_value(FilterName, List) of
-                    FilterValue -> false;
-                    _           -> true
-                end
-        end, Items)
-     ).
-
 get_json(ConsumerKey, AccessToken, Params) ->
     jiffy:encode({
-      lists:append([
-                    {consumer_key, to_bin(ConsumerKey)},
+      lists:append([{consumer_key, to_bin(ConsumerKey)},
                     {access_token, to_bin(AccessToken)}
                    ],
                    Params
@@ -180,12 +156,14 @@ parse_response(Response, json) ->
     jiffy:decode(to_bin(Response)).
 
 http_request(Url, Json) ->
+    io:format("DEBUG: json=~p~n", [Json]),
     {ok, {{_, Status, _}, _, Response}} =
         httpc:request(
-            post,
-            {Url, ["application/json"], "application/json", Json},
-            [], []
-        ),
+          post,
+          {Url, ["application/json"], "application/json", Json},
+          [{timeout, infinity}],
+          []
+         ),
 
     {Status, Response}.
 
@@ -209,8 +187,11 @@ get_url(authorize_url, Code, RedirectUri) ->
     ?BASE_URL ++ "auth/authorize?request_token=" ++ Code ++ ""
         "&redirect_uri=" ++ RedirectUri.
 
+to_bin(Value) when is_list(Value) ->
+    list_to_binary(Value);
 to_bin(Value) ->
-    list_to_binary(Value).
+    Value.
 
-deps() ->
-    [crypto, public_key, ssl, inets, jiffy].
+read_api_keys() ->
+    {ok,[Keys]} = file:consult("api.txt"),
+    Keys.

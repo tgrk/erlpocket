@@ -5,7 +5,7 @@ An Erlang library for Pocket API
 
 ## Fetch dependencies
 
-Project depends on [git://github.com/davisp/jiffy.git) and [reloader](https://github.com/bjnortier/reloader).
+Project depends on [jiffy](https://github.com/davisp/jiffy) and [reloader](https://github.com/bjnortier/reloader).
 
     $ rebar get-deps
 
