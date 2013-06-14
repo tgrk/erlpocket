@@ -14,7 +14,7 @@
          authorize/2,
 
          get_stats/2,
-         get/3,
+         retrieve/3,
          get_items/3,
          add/6,
          add/3,
@@ -58,7 +58,7 @@ authorize(ConsumerKey, Code) ->
       params
      ).
 
-get(ConsumerKey, AccessToken, Query) ->
+retrieve(ConsumerKey, AccessToken, Query) ->
     Json = get_json(ConsumerKey, AccessToken, Query),
     case call_api(get_url(retrieve), Json, json) of
         {ok, JsonResp} ->
@@ -72,7 +72,7 @@ get_items(ConsumerKey, AccessToken, Filter) ->
            {<<"complete">>, 1},
            {<<"list">>,     {Items}},
            {<<"since">>,    _Since}
-          ]}} = get(ConsumerKey, AccessToken, Filter),
+          ]}} = retrieve(ConsumerKey, AccessToken, Filter),
     Items.
 
 get_stats(ConsumerKey, AccessToken) ->
@@ -149,6 +149,44 @@ call_api(Url, Json, Type) ->
         {Other, Reason} ->
             {Other, Reason}
     end.
+
+is_valid_filter(Type, Filters) ->
+    [validate_filter(Type, F) || F <- Filters].
+
+validate_filter(retrieve, {state, Value}) ->
+    case Value of
+        unread -> true;
+        archive -> true;
+        all -> true;
+        _   -> false
+    end;
+validate_filter(retrieve, {favorite, Value}) ->
+    case Value of
+        0 -> true;
+        1 -> true;
+        _ -> false
+    end;
+validate_filter(retrieve, {tag, Value}) when is_atom(Value) ->
+    true;
+validate_filter(retrieve, {contentType, Value}) ->
+    true;
+validate_filter(retrieve, {sort, Value}) ->
+    true;
+validate_filter(retrieve, {detailType, Value}) ->
+    true;
+validate_filter(retrieve, {search, Value}) ->
+    true;
+validate_filter(retrieve, {domain, Value}) ->
+    true;
+validate_filter(retrieve, {since, Value}) ->
+    true;
+validate_filter(retrieve, {count, Value}) ->
+    true;
+validate_filter(retrieve, {offset, Value}) ->
+    true;
+validate_filter(retrieve, {Type, Value}) ->
+    false.
+
 
 parse_response(Response, params) ->
     parse_params(Response);
