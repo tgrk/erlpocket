@@ -93,5 +93,7 @@ test_get_stats() ->
     false.
 
 read_api_keys() ->
-    {ok,[Keys]} = file:consult("../api.txt"),
-    Keys.
+    case file:consult("../api.txt") of
+        {ok,[Keys]} -> Keys;
+        _ -> throw("Unable to read credentials from api.txt file!")
+    end.

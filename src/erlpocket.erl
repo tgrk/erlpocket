@@ -59,12 +59,17 @@ authorize(ConsumerKey, Code) ->
      ).
 
 retrieve(ConsumerKey, AccessToken, Query) ->
-    Json = get_json(ConsumerKey, AccessToken, Query),
-    case call_api(get_url(retrieve), Json, json) of
-        {ok, JsonResp} ->
-            {ok, JsonResp};
-        {Other, Reason} ->
-            {error, {unable_to_get, Other, Reason}}
+    case is_valid_filter(retrieve, Query) of
+        true ->
+            Json = get_json(ConsumerKey, AccessToken, Query),
+            case call_api(get_url(retrieve), Json, json) of
+                {ok, JsonResp} ->
+                    {ok, JsonResp};
+                {Other, Reason} ->
+                    {error, {unable_to_get, Other, Reason}}
+            end;
+        false ->
+            throw({invalid_retrieve_filter, Query})
     end.
 
 get_items(ConsumerKey, AccessToken, Filter) ->
@@ -151,42 +156,35 @@ call_api(Url, Json, Type) ->
     end.
 
 is_valid_filter(Type, Filters) ->
-    [validate_filter(Type, F) || F <- Filters].
+    not lists:member(
+          false, [validate_filter(Type, F) || F <- Filters]
+         ).
 
 validate_filter(retrieve, {state, Value}) ->
-    case Value of
-        unread -> true;
-        archive -> true;
-        all -> true;
-        _   -> false
-    end;
+    lists:member(Value, [unread, archive, all]);
 validate_filter(retrieve, {favorite, Value}) ->
-    case Value of
-        0 -> true;
-        1 -> true;
-        _ -> false
-    end;
+    lists:member(Value, [0, 1]);
 validate_filter(retrieve, {tag, Value}) when is_atom(Value) ->
     true;
 validate_filter(retrieve, {contentType, Value}) ->
-    true;
+    lists:member(Value, [article, image, video]);
 validate_filter(retrieve, {sort, Value}) ->
-    true;
+    lists:member(Value, [newest, oldest, title, site]);
 validate_filter(retrieve, {detailType, Value}) ->
+    lists:member(Value, [complete, simple]);
+validate_filter(retrieve, {search, Value}) when is_list(Value) ->
     true;
-validate_filter(retrieve, {search, Value}) ->
+validate_filter(retrieve, {domain, Value}) when is_list(Value) ->
     true;
-validate_filter(retrieve, {domain, Value}) ->
+validate_filter(retrieve, {since, _Value}) ->
+    %TODO: implement timestamp validation
     true;
-validate_filter(retrieve, {since, Value}) ->
+validate_filter(retrieve, {count, Value}) when is_integer(Value) ->
     true;
-validate_filter(retrieve, {count, Value}) ->
+validate_filter(retrieve, {offset, Value}) when is_integer(Value)->
     true;
-validate_filter(retrieve, {offset, Value}) ->
-    true;
-validate_filter(retrieve, {Type, Value}) ->
+validate_filter(retrieve, {_Type, _Value}) ->
     false.
-
 
 parse_response(Response, params) ->
     parse_params(Response);
@@ -231,5 +229,7 @@ to_bin(Value) ->
     Value.
 
 read_api_keys() ->
-    {ok,[Keys]} = file:consult("api.txt"),
-    Keys.
+    case file:consult("api.txt") of
+        {ok,[Keys]} -> Keys;
+        _ -> throw("Unable to read credentials from api.txt file!")
+    end.
