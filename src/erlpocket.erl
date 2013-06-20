@@ -15,9 +15,12 @@
 
          get_stats/2,
          retrieve/3,
-         get_items/3,
-         add/6,
          add/3,
+         add/4,
+         add/5,
+         add/6,
+
+         get_items/3,
 
          test/0,
          start/0,
@@ -69,7 +72,7 @@ retrieve(ConsumerKey, AccessToken, Query) ->
                     {error, {unable_to_get, Other, Reason}}
             end;
         false ->
-            throw({invalid_retrieve_filter, Query})
+            throw({invalid_retrieve_params, Query})
     end.
 
 get_items(ConsumerKey, AccessToken, Filter) ->
@@ -102,6 +105,23 @@ get_stats(ConsumerKey, AccessToken) ->
               Templates
              ).
 
+add(ConsumerKey, AccessToken, Url, Title) ->
+    add(ConsumerKey,
+        AccessToken,
+        [{url,      to_bin(Url)},
+         {title,    to_bin(Title)}
+        ]
+       ).
+
+add(ConsumerKey, AccessToken, Url, Title, Tags) ->
+    add(ConsumerKey,
+        AccessToken,
+        [{url,      to_bin(Url)},
+         {title,    to_bin(Title)},
+         {tags,     to_bin(Tags)}
+        ]
+       ).
+
 add(ConsumerKey, AccessToken, Url, Title, Tags, TweetId) ->
     add(ConsumerKey,
         AccessToken,
@@ -113,14 +133,18 @@ add(ConsumerKey, AccessToken, Url, Title, Tags, TweetId) ->
        ).
 
 add(ConsumerKey, AccessToken, Query) ->
-    Json = get_json(ConsumerKey, AccessToken, Query),
-    case call_api(get_url(add), Json, json) of
-        {ok, JsonResp} ->
-            {ok, JsonResp};
-        {Other, Reason} ->
-            {error, {unable_to_add, Other, Reason}}
+    case is_valid_filter(add, Query) of
+        true ->
+            Json = get_json(ConsumerKey, AccessToken, Query),
+            case call_api(get_url(add), Json, json) of
+                {ok, JsonResp} ->
+                    {ok, JsonResp};
+                {Other, Reason} ->
+                    {error, {unable_to_add, Other, Reason}}
+            end;
+        false ->
+            throw({invalid_add_params, Query})
     end.
-
 
 start() ->
     [application:start(A) || A <- ?DEPS],
@@ -160,6 +184,16 @@ is_valid_filter(Type, Filters) ->
           false, [validate_filter(Type, F) || F <- Filters]
          ).
 
+validate_filter(add, {url, _Value}) ->
+    true;
+validate_filter(add, {title, _Value}) ->
+    true;
+validate_filter(add, {tags, _Value}) ->
+    true;
+validate_filter(add, {tweet_id, _Value}) ->
+    true;
+validate_filter(add, {_Type, _Value}) ->
+    false;
 validate_filter(retrieve, {state, Value}) ->
     lists:member(Value, [unread, archive, all]);
 validate_filter(retrieve, {favorite, Value}) ->
