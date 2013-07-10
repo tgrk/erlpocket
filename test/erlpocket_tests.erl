@@ -18,12 +18,12 @@ erlpocket_test_() ->
         fun() -> erlpocket:start() end,
         fun(_) -> erlpocket:stop() end,
         [
-         %% {"Unauthorized retrieve call", fun test_unauth_get/0},
-         %% {"Retrieve all items", fun test_get_all/0},
-         %% {"Retrieve unreaded items", fun test_get_unreaded/0},
-         %% {"Retrieve archived items", fun test_get_archive/0},
-         %% {"Retrieve favourite items", fun test_get_favourite/0},
-         %% {"Retrieve items by tag", fun test_get_by_tag/0},
+         {"Unauthorized retrieve call", fun test_unauth_get/0},
+         {"Retrieve all items", fun test_get_all/0},
+         {"Retrieve unreaded items", fun test_get_unreaded/0},
+         {"Retrieve archived items", fun test_get_archive/0},
+         {"Retrieve favourite items", fun test_get_favourite/0},
+         {"Retrieve items by tag", fun test_get_by_tag/0},
          {"Retrieve items stats", fun test_get_stats/0}
         ]
     }.
@@ -31,7 +31,7 @@ erlpocket_test_() ->
 %% =============================================================================
 test_unauth_get() ->
     Keys = read_api_keys(),
-    {Result, _} = erlpocket:get(
+    {Result, _} = erlpocket:retrieve(
                     proplists:get_value(consumer_key, Keys),
                     "foo",
                     []
@@ -40,7 +40,7 @@ test_unauth_get() ->
 
 test_get_all() ->
     Keys = read_api_keys(),
-    {Result, _} = erlpocket:get(
+    {Result, _} = erlpocket:retrieve(
                     proplists:get_value(consumer_key, Keys),
                     proplists:get_value(access_token, Keys),
                     []
@@ -49,7 +49,7 @@ test_get_all() ->
 
 test_get_unreaded() ->
     Keys = read_api_keys(),
-    {Result, _} = erlpocket:get(
+    {Result, _} = erlpocket:retrieve(
                     proplists:get_value(consumer_key, Keys),
                     proplists:get_value(access_token, Keys),
                     [{state, unread}]
@@ -58,7 +58,7 @@ test_get_unreaded() ->
 
 test_get_archive() ->
     Keys = read_api_keys(),
-    {Result, _} = erlpocket:get(
+    {Result, _} = erlpocket:retrieve(
                     proplists:get_value(consumer_key, Keys),
                     proplists:get_value(access_token, Keys),
                     [{state, archive}]
@@ -67,7 +67,7 @@ test_get_archive() ->
 
 test_get_favourite() ->
     Keys = read_api_keys(),
-    {Result, _} = erlpocket:get(
+    {Result, _} = erlpocket:retrieve(
                     proplists:get_value(consumer_key, Keys),
                     proplists:get_value(access_token, Keys),
                     [{favorite, 1}]
@@ -76,7 +76,7 @@ test_get_favourite() ->
 
 test_get_by_tag() ->
     Keys = read_api_keys(),
-    {Result, _} = erlpocket:get(
+    {Result, _} = erlpocket:retrieve(
                     proplists:get_value(consumer_key, Keys),
                     proplists:get_value(access_token, Keys),
                     [{tag, erlang}]
@@ -85,7 +85,7 @@ test_get_by_tag() ->
 
 test_get_stats() ->
     Keys = read_api_keys(),
-    R = erlpocket:get_stats(
+    R = erlpocket:stats(
           proplists:get_value(consumer_key, Keys),
           proplists:get_value(access_token, Keys)
          ),

@@ -70,10 +70,10 @@ endif
 # Only include local PLT if we have deps that we are going to analyze
 ifeq ($(strip $(DIALYZER_DEPS)),)
 dialyzer: ~/.dialyzer_plt
-	$(DIALYZER) $(DIALYZER_OPTS) -r ebin
+	$(DIALYZER) $(DIALYZER_OPTS) -r ebin test
 else
 dialyzer: ~/.dialyzer_plt $(DEPS_PLT)
-	$(DIALYZER) $(DIALYZER_OPTS) --plts ~/.dialyzer_plt $(DEPS_PLT) -r ebin
+	$(DIALYZER) $(DIALYZER_OPTS) --plts ~/.dialyzer_plt $(DEPS_PLT) -r ebin test
 
 $(DEPS_PLT):
 	$(DIALYZER) --build_plt $(DIALYZER_DEPS) --output_plt $(DEPS_PLT)

@@ -13,16 +13,14 @@
          get_authorize_url/2,
          authorize/2,
 
-         get_stats/2,
+         stats/2,
          retrieve/3,
          add/3,
          add/4,
          add/5,
          add/6,
+         modify/3,
 
-         get_items/3,
-
-         test/0,
          start/0,
          stop/0
         ]).
@@ -33,13 +31,6 @@
 %%%============================================================================
 %%% API
 %%%============================================================================
-test() ->
-    Keys = read_api_keys(),
-    erlpocket:get_stats(
-      proplists:get_value(consumer_key, Keys),
-      proplists:get_value(access_token, Keys)
-     ).
-
 request_token(ConsumerKey, RedirectUri) ->
     call_api(
       get_url(request_token),
@@ -75,15 +66,8 @@ retrieve(ConsumerKey, AccessToken, Query) ->
             throw({invalid_retrieve_params, Query})
     end.
 
-get_items(ConsumerKey, AccessToken, Filter) ->
-    {ok, {[{<<"status">>,   1},
-           {<<"complete">>, 1},
-           {<<"list">>,     {Items}},
-           {<<"since">>,    _Since}
-          ]}} = retrieve(ConsumerKey, AccessToken, Filter),
-    Items.
-
-get_stats(ConsumerKey, AccessToken) ->
+%TODO - evaluate using parallel requests
+stats(ConsumerKey, AccessToken) ->
     Templates = [
                  {total_items,    [{state,       all}]},
                  {total_unread,   [{state,       unread}]},
@@ -92,18 +76,7 @@ get_stats(ConsumerKey, AccessToken) ->
                  {total_articles, [{contentType, article}]},
                  {total_videos,   [{contentType, video}]}
                 ],
-    lists:map(fun({Type, Params}) ->
-                      Items = get_items(ConsumerKey,
-                                        AccessToken,
-                                        lists:append(
-                                          Params,
-                                          [{detailType, simple}]
-                                         )
-                                       ),
-                      {Type, length(Items)}
-              end,
-              Templates
-             ).
+    [get_stats(ConsumerKey, AccessToken, T) || T <- Templates].
 
 add(ConsumerKey, AccessToken, Url, Title) ->
     add(ConsumerKey,
@@ -146,6 +119,15 @@ add(ConsumerKey, AccessToken, Query) ->
             throw({invalid_add_params, Query})
     end.
 
+modify(ConsumerKey, AccessToken, Params) ->
+    Json = get_json(ConsumerKey, AccessToken, Params),
+    case call_api(get_url(modify), Json, json) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {Other, Reason} ->
+            {error, {unable_to_modify_add, Other, Reason}}
+    end.
+
 start() ->
     [application:start(A) || A <- ?DEPS],
     ok.
@@ -158,6 +140,24 @@ stop() ->
 %%%============================================================================
 %%% Internal functionality
 %%%============================================================================
+get_items(ConsumerKey, AccessToken, Filter) ->
+    {ok, {[{<<"status">>,   1},
+           {<<"complete">>, 1},
+           {<<"list">>,     {Items}},
+           {<<"since">>,    _Since}
+          ]}} = retrieve(ConsumerKey, AccessToken, Filter),
+    Items.
+
+get_stats(ConsumerKey, AccessToken, {Type, Params}) ->
+    Items = get_items(ConsumerKey,
+                      AccessToken,
+                      lists:append(
+                        Params,
+                        [{detailType, simple}]
+                       )
+                     ),
+    {Type, length(Items)}.
+
 get_json(ConsumerKey, AccessToken, Params) ->
     jiffy:encode({
       lists:append([{consumer_key, to_bin(ConsumerKey)},
@@ -251,7 +251,9 @@ get_url(authorize) ->
 get_url(retrieve) ->
     ?BASE_URL ++ "v3/get";
 get_url(add) ->
-    ?BASE_URL ++ "v3/add".
+    ?BASE_URL ++ "v3/add";
+get_url(modify) ->
+    ?BASE_URL ++ "v3/send".
 
 get_url(authorize_url, Code, RedirectUri) ->
     ?BASE_URL ++ "auth/authorize?request_token=" ++ Code ++ ""
@@ -261,9 +263,3 @@ to_bin(Value) when is_list(Value) ->
     list_to_binary(Value);
 to_bin(Value) ->
     Value.
-
-read_api_keys() ->
-    case file:consult("api.txt") of
-        {ok,[Keys]} -> Keys;
-        _ -> throw("Unable to read credentials from api.txt file!")
-    end.
