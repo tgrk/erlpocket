@@ -7,15 +7,15 @@ An Erlang library for Pocket API
 
 Project depends on [jiffy][2] and [reloader][3] libraries.
 
-$ rebar get-deps
+   $ rebar get-deps
 
 ## Compile
 
-$ rebar compile
+   $ rebar compile
 
 ## Quick start
 
-$ ./start.sh
+   $ ./start.sh
 
 ### Authentication
 
