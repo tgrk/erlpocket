@@ -32,31 +32,33 @@
 %%% API
 %%%============================================================================
 request_token(ConsumerKey, RedirectUri) ->
-    call_api(
-      get_url(request_token),
-      jiffy:encode({[{consumer_key, to_bin(ConsumerKey)},
-                     {redirect_uri, to_bin(RedirectUri)}
-                    ]}),
-      params
-     ).
+    call_api(request_token,
+             jiffy:encode(
+               {[{consumer_key, to_bin(ConsumerKey)},
+                 {redirect_uri, to_bin(RedirectUri)}
+                ]}
+              ),
+             params
+            ).
 
-get_authorize_url(Token, RedirectUri) ->
-    get_url(authorize_url, Token, RedirectUri).
+get_authorize_url(Code, RedirectUri) ->
+    get_url(authorize_url, Code, RedirectUri).
 
 authorize(ConsumerKey, Code) ->
-    call_api(
-      get_url(authorize),
-      jiffy:encode({[{consumer_key, to_bin(ConsumerKey)},
-                     {code, to_bin(Code)}
-                    ]}),
-      params
-     ).
+    call_api(authorize,
+             jiffy:encode(
+               {[{consumer_key, to_bin(ConsumerKey)},
+                 {code, to_bin(Code)}
+                ]}
+              ),
+             params
+            ).
 
 retrieve(ConsumerKey, AccessToken, Query) ->
     case is_valid_filter(retrieve, Query) of
         true ->
             Json = get_json(ConsumerKey, AccessToken, Query),
-            case call_api(get_url(retrieve), Json, json) of
+            case call_api(retrieve, Json, json) of
                 {ok, JsonResp} ->
                     {ok, JsonResp};
                 {Other, Reason} ->
@@ -109,7 +111,7 @@ add(ConsumerKey, AccessToken, Query) ->
     case is_valid_filter(add, Query) of
         true ->
             Json = get_json(ConsumerKey, AccessToken, Query),
-            case call_api(get_url(add), Json, json) of
+            case call_api(add, Json, json) of
                 {ok, JsonResp} ->
                     {ok, JsonResp};
                 {Other, Reason} ->
@@ -121,7 +123,7 @@ add(ConsumerKey, AccessToken, Query) ->
 
 modify(ConsumerKey, AccessToken, Params) ->
     Json = get_json(ConsumerKey, AccessToken, Params),
-    case call_api(get_url(modify), Json, json) of
+    case call_api(modify, Json, json) of
         {ok, JsonResp} ->
             {ok, JsonResp};
         {Other, Reason} ->
@@ -167,8 +169,8 @@ get_json(ConsumerKey, AccessToken, Params) ->
                   )
     }).
 
-call_api(Url, Json, Type) ->
-   case http_request(Url, Json) of
+call_api(UrlType, Json, Type) ->
+   case http_request(get_url(UrlType), Json) of
         {200, Response} ->
            {ok, parse_response(Response, Type)};
         {400, _} ->
