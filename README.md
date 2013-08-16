@@ -6,21 +6,26 @@ An Erlang library for Pocket API
 ## Fetch dependencies
 
 Project depends on [jiffy][2] and [reloader][3] libraries.
-
-   $ rebar get-deps
+```
+$ rebar get-deps
+```
 
 ## Compile
-
-   $ rebar compile
+```
+$ rebar compile
+```
 
 ## Quick start
-
-   $ ./start.sh
+```
+$ ./start.sh
+```
 
 ### Authentication
+The Pocket API uses custom implementation of oAuth 2.0 for authorization.
+This library provide helper functions to authorize your application.
 
 #### Obtain a platform consumer key
-First you have[Register][1] your application to get consumer key.
+First you have to [register][1] your application to get consumer key.
 
 #### Obtain a request token
 ```erlang
