@@ -31,7 +31,7 @@ First you have to [register][1] your application to get consumer key.
 ```erlang
 RedirectUri = "http://www.foo.com/",
 ConsumerKey = "<app-consumer-key>",
-{ok, [{code, Code}]} = erlpocket:retrieve(ConsumerKey, RedirectUri).
+{ok, [{code, Code}]} = erlpocket:request_token(ConsumerKey, RedirectUri).
 ```
 #### Obtain a request token
 Use returned security token(code) to get URL that will authorize your
