@@ -27,7 +27,7 @@
          stop/0
         ]).
 
--define(DEPS, [sasl, crypto, public_key, ssl, inets, jiffy, erlpocket]).
+-define(DEPS, [sasl, crypto, asn1, public_key, ssl, inets, jiffy, erlpocket]).
 -define(BASE_URL, "https://getpocket.com/").
 
 %%%============================================================================
