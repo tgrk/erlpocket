@@ -3,14 +3,7 @@
     {vsn, "0.1"},
     {registered, []},
     {applications, [stdlib,
-                    kernel,
-                    sasl,
-                    crypto,
-                    public_key,
-                    ssl,
-                    inets,
-                    jiffy,
-                    reloader
+                    kernel
                    ]},
    {modules, []},
    {env, []}

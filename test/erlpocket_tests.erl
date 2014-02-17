@@ -15,7 +15,7 @@
 %% =============================================================================
 erlpocket_test_() ->
     {setup,
-        fun() -> erlpocket:start() end,
+        fun() -> erlpocket:start()  end,
         fun(_) -> erlpocket:stop() end,
         [
          {"Unauthorized retrieve call", fun test_unauth_get/0},
