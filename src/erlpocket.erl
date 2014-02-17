@@ -21,6 +21,8 @@
          add/6,
          modify/3,
 
+         is_valid_query/2,
+
          start/0,
          stop/0
         ]).
@@ -55,7 +57,7 @@ authorize(ConsumerKey, Code) ->
             ).
 
 retrieve(ConsumerKey, AccessToken, Query) ->
-    case is_valid_filter(retrieve, Query) of
+    case is_valid_query(retrieve, Query) of
         true ->
             Json = get_json(ConsumerKey, AccessToken, Query),
             case call_api(retrieve, Json, json) of
@@ -108,7 +110,7 @@ add(ConsumerKey, AccessToken, Url, Title, Tags, TweetId) ->
        ).
 
 add(ConsumerKey, AccessToken, Query) ->
-    case is_valid_filter(add, Query) of
+    case is_valid_query(add, Query) of
         true ->
             Json = get_json(ConsumerKey, AccessToken, Query),
             case call_api(add, Json, json) of
@@ -129,6 +131,12 @@ modify(ConsumerKey, AccessToken, Params) ->
         {Other, Reason} ->
             {error, {unable_to_modify_add, Other, Reason}}
     end.
+
+
+is_valid_query(Type, Filters) ->
+    not lists:member(
+          false, [validate_filter(Type, F) || F <- Filters]
+         ).
 
 start() ->
     [application:start(A) || A <- ?DEPS],
@@ -174,17 +182,12 @@ call_api(UrlType, Json, Type) ->
         {200, Response} ->
            {ok, parse_response(Response, Type)};
         {400, _} ->
-            {error, missing_consumer_key};
+           {error, missing_required_parameters};
         {403, _} ->
             {error, invalid_consumer_key};
         {Other, Reason} ->
             {Other, Reason}
     end.
-
-is_valid_filter(Type, Filters) ->
-    not lists:member(
-          false, [validate_filter(Type, F) || F <- Filters]
-         ).
 
 validate_filter(add, {url, _Value}) ->
     true;
