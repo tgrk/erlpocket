@@ -61,7 +61,7 @@ true = erlpocket:is_valid_param(add, [{title, "Foobar"}, {url, "http://foobar"}]
 ```
 
 #### Retrieve API
-To get content use following call:
+To [get][4] content use following call:
 ```erlang
 Query = [{tag, erlang}].
 {ok, Response} = erlpocket:retrieve(ConsumerKey, AccessToken, Query).
@@ -72,13 +72,13 @@ true = erlpocket:is_valid_query([{contentType, video}]).
 ```
 
 #### Add API
-Add new content:
+[Add][5] new content:
 ```erlang
 TODO
 ```
 
 #### Modify API
-Update existing content:
+[Update][6] existing content:
 ```erlang
 TODO
 ```
@@ -86,3 +86,6 @@ TODO
 [1]: http://getpocket.com/developer/docs/overview
 [2]: http://getpocket.com/developer/apps/new
 [3]: https://github.com/davisp/jiffy
+[4]: http://getpocket.com/developer/docs/v3/retrieve
+[5]: http://getpocket.com/developer/docs/v3/add
+[6]: http://getpocket.com/developer/docs/v3/modify
