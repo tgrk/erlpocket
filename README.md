@@ -72,15 +72,20 @@ true = erlpocket:is_valid_query([{contentType, video}]).
 ```
 
 #### Add API
-[Add][5] new content:
+[Add][5] new content simply by calling:
 ```erlang
-TODO
+{ok, {[{<<"item">, _}]}} = erlpocket:add(ConsumerKey, AccessToken, "http://foobar/").
 ```
+or function with different arrity.
 
 #### Modify API
 [Update][6] existing content:
 ```erlang
 TODO
+```
+Helper for deleting an existing content (on top of modify API):
+```erlang
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:delete(ConsumerKey, AccessToken, "1234").
 ```
 
 [1]: http://getpocket.com/developer/docs/overview

@@ -3,5 +3,5 @@
               {vsn,"0.1"},
               {registered,[]},
               {applications,[stdlib,kernel]},
-              {modules,[erlpocket]},
+              {modules,[erlpocket,erlpocket_tests]},
               {env,[]}]}.

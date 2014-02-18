@@ -18,7 +18,7 @@
          add/3,
          add/4,
          add/5,
-         add/6,
+         delete/3,
          modify/3,
 
          is_valid_query/1,
@@ -71,7 +71,7 @@ authorize(ConsumerKey, Code) ->
             ).
 
 -spec retrieve(string(),string(),[{_,_}]) ->
-                      {'error',{'unable_to_get',_,_}} | {'ok', _}.
+                      {'error',{'unable_to_retrieve',_,_}} | {'ok', _}.
 retrieve(ConsumerKey, AccessToken, Query) ->
     case is_valid_query(Query) of
         true ->
@@ -80,7 +80,7 @@ retrieve(ConsumerKey, AccessToken, Query) ->
                 {ok, JsonResp} ->
                     {ok, JsonResp};
                 {Other, Reason} ->
-                    {error, {unable_to_get, Other, Reason}}
+                    {error, {unable_to_retrieve, Other, Reason}}
             end;
         false ->
             throw({invalid_retrieve_params, Query})
@@ -98,38 +98,19 @@ stats(ConsumerKey, AccessToken) ->
                 ],
     [get_stats(ConsumerKey, AccessToken, T) || T <- Templates].
 
--spec add(string(),string(),string(),string()) ->
+-spec add(string(),string(),string(), string()) ->
                  {'error',{'unable_to_add',_,_}} | {'ok',_}.
-add(ConsumerKey, AccessToken, Url, Title) ->
-    add(ConsumerKey,
-        AccessToken,
-        [{url,      to_bin(Url)},
-         {title,    to_bin(Title)}
-        ]
-       ).
+add(ConsumerKey, AccessToken, Url, Tags) ->
+    add(ConsumerKey, AccessToken,
+        [{url, to_bin(Url)}, {tags, to_bin(Tags)}]).
 
--spec add(string(),string(),string(),string(), string()) ->
+-spec add(string(),string(),string(),string(),string()) ->
                  {'error',{'unable_to_add',_,_}} | {'ok',_}.
-add(ConsumerKey, AccessToken, Url, Title, Tags) ->
-    add(ConsumerKey,
-        AccessToken,
-        [{url,      to_bin(Url)},
-         {title,    to_bin(Title)},
-         {tags,     to_bin(Tags)}
-        ]
-       ).
-
--spec add(string(),string(),string(),string(),string(),string()) ->
-                 {'error',{'unable_to_add',_,_}} | {'ok',_}.
-add(ConsumerKey, AccessToken, Url, Title, Tags, TweetId) ->
-    add(ConsumerKey,
-        AccessToken,
-        [{url,      to_bin(Url)},
-         {title,    to_bin(Title)},
-         {tags,     to_bin(Tags)},
-         {tweet_id, to_bin(TweetId)}
-        ]
-       ).
+add(ConsumerKey, AccessToken, Url, Tags, TweetId) ->
+    add(ConsumerKey, AccessToken, [{url,      to_bin(Url)},
+                                   {tags,     to_bin(Tags)},
+                                   {tweet_id, to_bin(TweetId)}
+                                  ]).
 
 -spec add(string(),string(), params()) ->
                  {'error',{'unable_to_add',_,_}} | {'ok',_}.
@@ -147,15 +128,29 @@ add(ConsumerKey, AccessToken, Query) ->
             throw({invalid_add_params, Query})
     end.
 
+-spec delete(string(),string(),string()) ->
+                    {'error',{'unable_to_delete',_,_}} | {'ok',_}.
+delete(ConsumerKey, AccessToken, ItemId) ->
+    Json = get_json(ConsumerKey, AccessToken,
+                   [{actions,
+                     [{[{action, delete}, {item_id, ItemId}]}]
+                    }]),
+    case call_api(modify, Json, json) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {Other, Reason} ->
+            {error, {unable_to_delete, Other, Reason}}
+    end.
+
 -spec modify(string(),string(),params()) ->
-                    {'error',{'unable_to_modify_add',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_modify',_,_}} | {'ok',_}.
 modify(ConsumerKey, AccessToken, Params) ->
     Json = get_json(ConsumerKey, AccessToken, Params),
     case call_api(modify, Json, json) of
         {ok, JsonResp} ->
             {ok, JsonResp};
         {Other, Reason} ->
-            {error, {unable_to_modify_add, Other, Reason}}
+            {error, {unable_to_modify, Other, Reason}}
     end.
 
 -spec is_valid_query(params()) -> boolean().
@@ -244,8 +239,12 @@ validate_filter(retrieve, {sort, Value}) ->
 validate_filter(retrieve, {detailType, Value}) ->
     lists:member(Value, [complete, simple]);
 validate_filter(retrieve, {search, Value}) when is_list(Value) ->
+    false;
+validate_filter(retrieve, {search, Value}) when is_binary(Value) ->
     true;
 validate_filter(retrieve, {domain, Value}) when is_list(Value) ->
+    false;
+validate_filter(retrieve, {domain, Value}) when is_binary(Value) ->
     true;
 validate_filter(retrieve, {since, _Value}) ->
     %TODO: implement timestamp validation
@@ -255,7 +254,13 @@ validate_filter(retrieve, {count, Value}) when is_integer(Value) ->
 validate_filter(retrieve, {offset, Value}) when is_integer(Value)->
     true;
 validate_filter(retrieve, {_Type, _Value}) ->
-    false.
+    false;
+validate_filter(modify, {action, Value}) when is_atom(Value) ->
+    true;
+validate_filter(modify, {action, _Value}) ->
+    false;
+validate_filter(modify, {item_id, _Id}) ->
+    true.
 
 parse_response(Response, params) ->
     parse_params(Response);
@@ -263,6 +268,7 @@ parse_response(Response, json) ->
     jiffy:decode(to_bin(Response)).
 
 http_request(Url, Json) ->
+    %%TODO: enable tracking based on configuration
     io:format("DEBUG: json=~p~n", [Json]),
     {ok, {{_, Status, _}, _, Response}} =
         httpc:request(
