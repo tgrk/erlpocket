@@ -45,7 +45,7 @@ Url = erlpocket:get_authorize_url(Code, RedirectUri).
 {ok, [{access_token, AccessToken},{username, Username}]} = erlpocket:authorize(ConsumerKey, Code).
 ```
 
-#### Working with content API
+### Working with content API
 After sucessfull authentication you are ready call add/modify and retrieve functions.
 
 To get content use forllowing call:
