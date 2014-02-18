@@ -50,17 +50,17 @@ After sucessfull authentication you are ready call add/modify and retrieve funct
 
 #### General
 
-Get content statistics:
+You can also get content statistics, but it is just call on top of retrieve so it can take quite some time.
 ```erlang
-TODO
+Stats = erlpocket:stats(ConsumerKey, AccessToken).
 ```
 
-Validate params:
+Validate API params:
 ```erlang
-true = erlpocket:is_valid_param(add, [{contentType, video}]).
+true = erlpocket:is_valid_param(add, [{title, "Foobar"}, {url, "http://foobar"}]).
 ```
 
-#### Retrieve
+#### Retrieve API
 To get content use following call:
 ```erlang
 Query = [{tag, erlang}].
@@ -71,13 +71,13 @@ To validate retrieve query there is a helper:
 true = erlpocket:is_valid_query([{contentType, video}]).
 ```
 
-#### Addd
+#### Add API
 Add new content:
 ```erlang
 TODO
 ```
 
-#### Modify
+#### Modify API
 Update existing content:
 ```erlang
 TODO
