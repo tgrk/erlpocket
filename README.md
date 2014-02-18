@@ -48,27 +48,37 @@ Url = erlpocket:get_authorize_url(Code, RedirectUri).
 ### Working with content API
 After sucessfull authentication you are ready call add/modify and retrieve functions.
 
-To get content use forllowing call:
+#### General
+
+Get content statistics:
+```erlang
+TODO
+```
+
+Validate params:
+```erlang
+true = erlpocket:is_valid_param(add, [{contentType, video}]).
+```
+
+#### Retrieve
+To get content use following call:
 ```erlang
 Query = [{tag, erlang}].
 {ok, Response} = erlpocket:retrieve(ConsumerKey, AccessToken, Query).
 ```
-To validate query there is a helper:
+To validate retrieve query there is a helper:
 ```erlang
 true = erlpocket:is_valid_query([{contentType, video}]).
 ```
 
+#### Addd
 Add new content:
 ```erlang
 TODO
 ```
 
+#### Modify
 Update existing content:
-```erlang
-TODO
-```
-
-Get content statistics:
 ```erlang
 TODO
 ```
