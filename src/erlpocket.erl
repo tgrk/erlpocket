@@ -128,20 +128,6 @@ add(ConsumerKey, AccessToken, Query) ->
             throw({invalid_add_params, Query})
     end.
 
--spec delete(string(),string(),string()) ->
-                    {'error',{'unable_to_delete',_,_}} | {'ok',_}.
-delete(ConsumerKey, AccessToken, ItemId) ->
-    Json = get_json(ConsumerKey, AccessToken,
-                   [{actions,
-                     [{[{action, delete}, {item_id, ItemId}]}]
-                    }]),
-    case call_api(modify, Json, json) of
-        {ok, JsonResp} ->
-            {ok, JsonResp};
-        {Other, Reason} ->
-            {error, {unable_to_delete, Other, Reason}}
-    end.
-
 -spec modify(string(),string(),params()) ->
                     {'error',{'unable_to_modify',_,_}} | {'ok',_}.
 modify(ConsumerKey, AccessToken, Params) ->
@@ -151,6 +137,19 @@ modify(ConsumerKey, AccessToken, Params) ->
             {ok, JsonResp};
         {Other, Reason} ->
             {error, {unable_to_modify, Other, Reason}}
+    end.
+
+-spec delete(string(),string(),string()) ->
+                    {'error',{'unable_to_delete',_,_}} | {'ok',_}.
+delete(ConsumerKey, AccessToken, ItemId) ->
+    case modify(ConsumerKey, AccessToken,
+           [{actions,
+             [{[{action, delete}, {item_id, ItemId}]}]
+            }]) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, {unable_to_modify, Other, Reason}} ->
+            {error, {unable_to_delete, Other, Reason}}
     end.
 
 -spec is_valid_query(params()) -> boolean().
