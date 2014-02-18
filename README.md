@@ -1,11 +1,11 @@
 elrpocket
 =========
 
-An Erlang library for Pocket API
+An Erlang library for Pocket API. For more details see [documentation][1].
 
 ## Fetch dependencies
 
-Project depends on [jiffy][2] and [reloader][3] libraries.
+Project depends on [jiffy][3] librariy for JSON parsing.
 ```
 $ rebar get-deps
 ```
@@ -25,7 +25,7 @@ The Pocket API uses custom implementation of oAuth 2.0 for authorization.
 This library provide helper functions to authorize your application.
 
 #### Obtain a platform consumer key
-First you have to [register][1] your application to get consumer key.
+First you have to [register][3] your application to get consumer key.
 
 #### Obtain a request token
 ```erlang
@@ -37,15 +37,42 @@ ConsumerKey = "<app-consumer-key>",
 Use returned security token(code) to get URL that will authorize your
 application on Pocket website.
 ```erlang
-Url = erlpocket:get_authorize_url(Code, RedirectUri)
+Url = erlpocket:get_authorize_url(Code, RedirectUri).
 ```
 
 #### Convert a request code into Pocket access token
 ```erlang
-{ok, [{access_token, AccessToken},{username, Username}]} = erlpocket:authorize(ConsumerKey, Code)
+{ok, [{access_token, AccessToken},{username, Username}]} = erlpocket:authorize(ConsumerKey, Code).
 ```
-TODO: rest
 
-[1]: http://getpocket.com/developer/apps/new
-[2]: https://github.com/davisp/jiffy
-[3]: https://github.com/bjnortier/reloader
+#### Working with content API
+After sucessfull authentication you are ready call add/modify and retrieve functions.
+
+To get content use forllowing call:
+```erlang
+Query = [{tag, erlang}].
+{ok, Response} = erlpocket:retrieve(ConsumerKey, AccessToken, Query).
+```
+To validate query there is a helper:
+```erlang
+true = erlpocket:is_valid_query([{contentType, video}]).
+```
+
+Add new content:
+```erlang
+TODO
+```
+
+Update existing content:
+```erlang
+TODO
+```
+
+Get content statistics:
+```erlang
+TODO
+```
+
+[1]: http://getpocket.com/developer/docs/overview
+[2]: http://getpocket.com/developer/apps/new
+[3]: https://github.com/davisp/jiffy
