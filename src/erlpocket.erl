@@ -21,7 +21,8 @@
          add/6,
          modify/3,
 
-         is_valid_query/2,
+         is_valid_query/1,
+         is_valid_param/2,
 
          start/0,
          stop/0
@@ -30,9 +31,19 @@
 -define(DEPS, [sasl, crypto, asn1, public_key, ssl, inets, jiffy, erlpocket]).
 -define(BASE_URL, "https://getpocket.com/").
 
+%% Types
+-type result_stats() :: [{'total_archive' | 'total_articles' | 'total_favorite'
+                          | 'total_items' | 'total_unread' | 'total_videos',
+                          non_neg_integer()}].
+-type params() :: list({atom, any()}).
+
+-export_type([result_stats/0, params/0]).
+
 %%%============================================================================
 %%% API
 %%%============================================================================
+-spec request_token(string(),string()) ->
+                           {'ok', [{'code', string()}]} | {'error', any()}.
 request_token(ConsumerKey, RedirectUri) ->
     call_api(request_token,
              jiffy:encode(
@@ -43,9 +54,12 @@ request_token(ConsumerKey, RedirectUri) ->
              params
             ).
 
+-spec get_authorize_url([any()], string()) -> string().
 get_authorize_url(Code, RedirectUri) ->
     get_url(authorize_url, Code, RedirectUri).
 
+-spec authorize(string(),string()) ->
+                       {'ok', list({atom(),any()})} | {'error', any()}.
 authorize(ConsumerKey, Code) ->
     call_api(authorize,
              jiffy:encode(
@@ -56,8 +70,10 @@ authorize(ConsumerKey, Code) ->
              params
             ).
 
+-spec retrieve(string(),string(),[{_,_}]) ->
+                      {'error',{'unable_to_get',_,_}} | {'ok', _}.
 retrieve(ConsumerKey, AccessToken, Query) ->
-    case is_valid_query(retrieve, Query) of
+    case is_valid_query(Query) of
         true ->
             Json = get_json(ConsumerKey, AccessToken, Query),
             case call_api(retrieve, Json, json) of
@@ -70,7 +86,7 @@ retrieve(ConsumerKey, AccessToken, Query) ->
             throw({invalid_retrieve_params, Query})
     end.
 
-%TODO - evaluate using parallel requests
+-spec stats(string(),string()) -> result_stats().
 stats(ConsumerKey, AccessToken) ->
     Templates = [
                  {total_items,    [{state,       all}]},
@@ -82,6 +98,8 @@ stats(ConsumerKey, AccessToken) ->
                 ],
     [get_stats(ConsumerKey, AccessToken, T) || T <- Templates].
 
+-spec add(string(),string(),string(),string()) ->
+                 {'error',{'unable_to_add',_,_}} | {'ok',_}.
 add(ConsumerKey, AccessToken, Url, Title) ->
     add(ConsumerKey,
         AccessToken,
@@ -90,6 +108,8 @@ add(ConsumerKey, AccessToken, Url, Title) ->
         ]
        ).
 
+-spec add(string(),string(),string(),string(), string()) ->
+                 {'error',{'unable_to_add',_,_}} | {'ok',_}.
 add(ConsumerKey, AccessToken, Url, Title, Tags) ->
     add(ConsumerKey,
         AccessToken,
@@ -99,6 +119,8 @@ add(ConsumerKey, AccessToken, Url, Title, Tags) ->
         ]
        ).
 
+-spec add(string(),string(),string(),string(),string(),string()) ->
+                 {'error',{'unable_to_add',_,_}} | {'ok',_}.
 add(ConsumerKey, AccessToken, Url, Title, Tags, TweetId) ->
     add(ConsumerKey,
         AccessToken,
@@ -109,8 +131,10 @@ add(ConsumerKey, AccessToken, Url, Title, Tags, TweetId) ->
         ]
        ).
 
+-spec add(string(),string(), params()) ->
+                 {'error',{'unable_to_add',_,_}} | {'ok',_}.
 add(ConsumerKey, AccessToken, Query) ->
-    case is_valid_query(add, Query) of
+    case is_valid_param(add, Query) of
         true ->
             Json = get_json(ConsumerKey, AccessToken, Query),
             case call_api(add, Json, json) of
@@ -123,6 +147,8 @@ add(ConsumerKey, AccessToken, Query) ->
             throw({invalid_add_params, Query})
     end.
 
+-spec modify(string(),string(),params()) ->
+                    {'error',{'unable_to_modify_add',_,_}} | {'ok',_}.
 modify(ConsumerKey, AccessToken, Params) ->
     Json = get_json(ConsumerKey, AccessToken, Params),
     case call_api(modify, Json, json) of
@@ -132,16 +158,22 @@ modify(ConsumerKey, AccessToken, Params) ->
             {error, {unable_to_modify_add, Other, Reason}}
     end.
 
+-spec is_valid_query(params()) -> boolean().
+is_valid_query(Filters) ->
+    is_valid_param(retrieve, Filters).
 
-is_valid_query(Type, Filters) ->
+-spec is_valid_param(atom(),params()) -> boolean().
+is_valid_param(Type, Filters) ->
     not lists:member(
           false, [validate_filter(Type, F) || F <- Filters]
          ).
 
+-spec start() -> 'ok'.
 start() ->
     [application:start(A) || A <- ?DEPS],
     ok.
 
+-spec stop() -> 'ok'.
 stop() ->
     [application:stop(A) || A <- ?DEPS],
     ok.
