@@ -5,7 +5,7 @@ An Erlang library for Pocket API. For more details see [documentation][1].
 
 ## Fetch dependencies
 
-Project depends on [jiffy][3] librariy for JSON parsing.
+Project depends on [jiffy][3] library for JSON parsing.
 ```
 $ rebar get-deps
 ```
@@ -16,9 +16,6 @@ $ rebar compile
 ```
 
 ## Quick start
-```
-$ ./start.sh
-```
 
 ### Authentication
 The Pocket API uses custom implementation of oAuth 2.0 for authorization.
