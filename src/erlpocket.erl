@@ -46,7 +46,7 @@
 -type result_stats() :: [{'total_archive' | 'total_articles' | 'total_favorite'
                           | 'total_items' | 'total_unread' | 'total_videos',
                           non_neg_integer()}].
--type params() :: list({atom, any()}).
+-type params() :: list({atom(), any()}).
 
 -export_type([result_stats/0, params/0]).
 
@@ -83,7 +83,7 @@ authorize(ConsumerKey, Code) ->
             ).
 
 -spec retrieve(string(),string(),[{_,_}]) ->
-                      {'error',{'unable_to_retrieve',_,_}} | {'ok', _}.
+                      {'error',{'unable_to_retrieve',_}} | {'ok', _}.
 retrieve(ConsumerKey, AccessToken, Query) ->
     case is_valid_query(Query) of
         true ->
@@ -91,8 +91,8 @@ retrieve(ConsumerKey, AccessToken, Query) ->
             case call_api(retrieve, Json, json) of
                 {ok, JsonResp} ->
                     {ok, JsonResp};
-                {Other, Reason} ->
-                    {error, {unable_to_retrieve, Other, Reason}}
+                {error, Reason} ->
+                    {error, {unable_to_retrieve, Reason}}
             end;
         false ->
             throw({invalid_retrieve_params, Query})
@@ -111,13 +111,13 @@ stats(ConsumerKey, AccessToken) ->
     [get_stats(ConsumerKey, AccessToken, T) || T <- Templates].
 
 -spec add(string(),string(),string(), string()) ->
-                 {'error',{'unable_to_add',_,_}} | {'ok',_}.
+                 {'error',{'unable_to_add',_}} | {'ok',_}.
 add(ConsumerKey, AccessToken, Url, Tags) ->
     add(ConsumerKey, AccessToken,
         [{url, to_bin(Url)}, {tags, to_bin(Tags)}]).
 
 -spec add(string(),string(),string(),string(),string()) ->
-                 {'error',{'unable_to_add',_,_}} | {'ok',_}.
+                 {'error',{'unable_to_add',_}} | {'ok',_}.
 add(ConsumerKey, AccessToken, Url, Tags, TweetId) ->
     add(ConsumerKey, AccessToken, [{url,      to_bin(Url)},
                                    {tags,     to_bin(Tags)},
@@ -125,7 +125,7 @@ add(ConsumerKey, AccessToken, Url, Tags, TweetId) ->
                                   ]).
 
 -spec add(string(),string(), params()) ->
-                 {'error',{'unable_to_add',_,_}} | {'ok',_}.
+                 {'error',{'unable_to_add',_}} | {'ok',_}.
 add(ConsumerKey, AccessToken, Query) ->
     case is_valid_param(add, Query) of
         true ->
@@ -133,26 +133,26 @@ add(ConsumerKey, AccessToken, Query) ->
             case call_api(add, Json, json) of
                 {ok, JsonResp} ->
                     {ok, JsonResp};
-                {Other, Reason} ->
-                    {error, {unable_to_add, Other, Reason}}
+                {error, Reason} ->
+                    {error, {unable_to_add, Reason}}
             end;
         false ->
             throw({invalid_add_params, Query})
     end.
 
 -spec modify(string(),string(),params()) ->
-                    {'error',{'unable_to_modify',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_modify',_}} | {'ok',_}.
 modify(ConsumerKey, AccessToken, Params) ->
     Json = get_json(ConsumerKey, AccessToken, Params),
     case call_api(modify, Json, json) of
         {ok, JsonResp} ->
             {ok, JsonResp};
         {Other, Reason} ->
-            {error, {unable_to_modify, Other, Reason}}
+            {error, {unable_to_modify, Reason}}
     end.
 
 -spec modify(string(),string(),atom(),string()) ->
-                    {'error',{'unable_to_modify',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_modify',_}} | {'ok',_}.
 modify(ConsumerKey, AccessToken, Action, ItemId) ->
     case modify(ConsumerKey, AccessToken,
            [{actions,
@@ -165,33 +165,33 @@ modify(ConsumerKey, AccessToken, Action, ItemId) ->
     end.
 
 -spec delete(string(),string(),string()) ->
-                    {'error',{'unable_to_delete',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_delete',_}} | {'ok',_}.
 delete(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, delete, ItemId) of
         {ok, JsonResp} ->
             {ok, JsonResp};
-        {error, {unable_to_modify, Other, Reason}} ->
-            {error, {unable_to_delete, Other, Reason}}
+        {error, {unable_to_modify, Reason}} ->
+            {error, {unable_to_delete, Reason}}
     end.
 
 -spec archive(string(),string(),string()) ->
-                    {'error',{'unable_to_archive',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_archive',_}} | {'ok',_}.
 archive(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, archive, ItemId) of
         {ok, JsonResp} ->
             {ok, JsonResp};
-        {error, {unable_to_modify, Other, Reason}} ->
-            {error, {unable_to_delete, Other, Reason}}
+        {error, {unable_to_modify, Reason}} ->
+            {error, {unable_to_delete, Reason}}
     end.
 
 -spec readd(string(),string(),string()) ->
-                    {'error',{'unable_to_readd',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_readd',_}} | {'ok',_}.
 readd(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, readd, ItemId) of
         {ok, JsonResp} ->
             {ok, JsonResp};
-        {error, {unable_to_modify, Other, Reason}} ->
-            {error, {unable_to_readd, Other, Reason}}
+        {error, {unable_to_modify, Reason}} ->
+            {error, {unable_to_readd, Reason}}
     end.
 
 -spec favorite(string(),string(),string()) ->
@@ -200,31 +200,24 @@ favorite(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, favorite, ItemId) of
         {ok, JsonResp} ->
             {ok, JsonResp};
-        {error, {unable_to_modify, Other, Reason}} ->
-            {error, {unable_to_favorite, Other, Reason}}
+        {error, {unable_to_modify, Reason}} ->
+            {error, {unable_to_favorite, Reason}}
     end.
 
 -spec unfavorite(string(),string(),string()) ->
-                    {'error',{'unable_to_unfavorite',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_unfavorite',_}} | {'ok',_}.
 unfavorite(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, unfavorite, ItemId) of
         {ok, JsonResp} ->
             {ok, JsonResp};
-        {error, {unable_to_modify, Other, Reason}} ->
-            {error, {unable_to_unfavorite, Other, Reason}}
+        {error, {unable_to_modify, Reason}} ->
+            {error, {unable_to_unfavorite, Reason}}
     end.
 
 -spec tags_add(string(),string(),string(),list(binary())) ->
-                    {'error',{'unable_to_tags_add',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_tags_add',_}} | {'ok',_}.
 tags_add(ConsumerKey, AccessToken, ItemId, Tags) ->
-    case modify(ConsumerKey, AccessToken,
-           [{actions,
-             [{[
-                {action,  tags_add},
-                {item_id, ItemId},
-                {tags,    eunsure_binary_list(Tags)}
-               ]}]
-            }]) of
+    case modify_tags(ConsumerKey, AccessToken, tags_add, ItemId, Tags) of
         {ok, JsonResp} ->
             {ok, JsonResp};
         {error, Reason} ->
@@ -232,16 +225,9 @@ tags_add(ConsumerKey, AccessToken, ItemId, Tags) ->
     end.
 
 -spec tags_remove(string(),string(),string(),list(binary())) ->
-                    {'error',{'unable_to_tags_remove',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_tags_remove',_}} | {'ok',_}.
 tags_remove(ConsumerKey, AccessToken, ItemId, Tags) ->
-    case modify(ConsumerKey, AccessToken,
-           [{actions,
-             [{[
-                {action,  tags_remove},
-                {item_id, ItemId},
-                {tags,    eunsure_binary_list(Tags)}
-               ]}]
-            }]) of
+    case modify_tags(ConsumerKey, AccessToken, tags_remove, ItemId, Tags) of
         {ok, JsonResp} ->
             {ok, JsonResp};
         {error, Reason} ->
@@ -249,16 +235,9 @@ tags_remove(ConsumerKey, AccessToken, ItemId, Tags) ->
     end.
 
 -spec tags_replace(string(),string(),string(),list(binary())) ->
-                    {'error',{'unable_to_tags_replace',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_tags_replace',_}} | {'ok',_}.
 tags_replace(ConsumerKey, AccessToken, ItemId, Tags) ->
-    case modify(ConsumerKey, AccessToken,
-           [{actions,
-             [{[
-                {action,  tags_replace},
-                {item_id, ItemId},
-                {tags,    eunsure_binary_list(Tags)}
-               ]}]
-            }]) of
+    case modify_tags(ConsumerKey, AccessToken, tags_replace, ItemId, Tags) of
         {ok, JsonResp} ->
             {ok, JsonResp};
         {error, Reason} ->
@@ -266,13 +245,13 @@ tags_replace(ConsumerKey, AccessToken, ItemId, Tags) ->
     end.
 
 -spec tags_clear(string(),string(),string()) ->
-                    {'error',{'unable_to_tags_clear',_,_}} | {'ok',_}.
+                    {'error',{'unable_to_tags_clear',_}} | {'ok',_}.
 tags_clear(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, tags_clear, ItemId) of
         {ok, JsonResp} ->
             {ok, JsonResp};
-        {error, {unable_to_modify, Other, Reason}} ->
-            {error, {unable_to_tags_clear, Other, Reason}}
+        {error, {unable_to_modify, Reason}} ->
+            {error, {unable_to_tags_clear, Reason}}
     end.
 
 -spec is_valid_query(params()) -> boolean().
@@ -326,6 +305,21 @@ get_json(ConsumerKey, AccessToken, Params) ->
                   )
     }).
 
+modify_tags(ConsumerKey, AccessToken, Action, ItemId, Tags) ->
+    case modify(ConsumerKey, AccessToken,
+                [{actions,
+                  [{[
+                     {action,  Action},
+                     {item_id, ItemId},
+                     {tags,    eunsure_binary_list(Tags)}
+                    ]}]
+                 }]) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, Reason} ->
+            {error, {unable_to_tags_replace, Reason}}
+    end.
+
 call_api(UrlType, Json, Type) ->
    case http_request(get_url(UrlType), Json) of
         {200, Response} ->
@@ -334,8 +328,8 @@ call_api(UrlType, Json, Type) ->
            {error, missing_required_parameters};
         {403, _} ->
             {error, invalid_consumer_key};
-        {Other, Reason} ->
-            {Other, Reason}
+        {_Other, Reason} ->
+            {error, Reason}
     end.
 
 validate_filter(add, {url, _Value}) ->
