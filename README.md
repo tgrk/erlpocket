@@ -1,4 +1,4 @@
-2elrpocket
+elrpocket
 =========
 
 An Erlang library for Pocket API. For more details see [documentation][1].
