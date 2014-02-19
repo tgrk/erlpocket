@@ -18,8 +18,15 @@
          add/3,
          add/4,
          add/5,
-         delete/3,
          modify/3,
+         modify/4,
+
+         delete/3,
+         archive/3,
+         readd/3,
+         favorite/3,
+         unfavorite/3,
+         tags_add/4,
 
          is_valid_query/1,
          is_valid_param/2,
@@ -139,17 +146,84 @@ modify(ConsumerKey, AccessToken, Params) ->
             {error, {unable_to_modify, Other, Reason}}
     end.
 
+-spec modify(string(),string(),atom(),string()) ->
+                    {'error',{'unable_to_modify',_,_}} | {'ok',_}.
+modify(ConsumerKey, AccessToken, Action, ItemId) ->
+    case modify(ConsumerKey, AccessToken,
+           [{actions,
+             [{[{action, Action}, {item_id, ItemId}]}]
+            }]) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, Reason} ->
+            {error, {unable_to_modify, Reason}}
+    end.
+
 -spec delete(string(),string(),string()) ->
                     {'error',{'unable_to_delete',_,_}} | {'ok',_}.
 delete(ConsumerKey, AccessToken, ItemId) ->
-    case modify(ConsumerKey, AccessToken,
-           [{actions,
-             [{[{action, delete}, {item_id, ItemId}]}]
-            }]) of
+    case modify(ConsumerKey, AccessToken, delete, ItemId) of
         {ok, JsonResp} ->
             {ok, JsonResp};
         {error, {unable_to_modify, Other, Reason}} ->
             {error, {unable_to_delete, Other, Reason}}
+    end.
+
+-spec archive(string(),string(),string()) ->
+                    {'error',{'unable_to_archive',_,_}} | {'ok',_}.
+archive(ConsumerKey, AccessToken, ItemId) ->
+    case modify(ConsumerKey, AccessToken, archive, ItemId) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, {unable_to_modify, Other, Reason}} ->
+            {error, {unable_to_delete, Other, Reason}}
+    end.
+
+-spec readd(string(),string(),string()) ->
+                    {'error',{'unable_to_readd',_,_}} | {'ok',_}.
+readd(ConsumerKey, AccessToken, ItemId) ->
+    case modify(ConsumerKey, AccessToken, readd, ItemId) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, {unable_to_modify, Other, Reason}} ->
+            {error, {unable_to_readd, Other, Reason}}
+    end.
+
+-spec favorite(string(),string(),string()) ->
+                    {'error',{'unable_to_favorite',_,_}} | {'ok',_}.
+favorite(ConsumerKey, AccessToken, ItemId) ->
+    case modify(ConsumerKey, AccessToken, favorite, ItemId) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, {unable_to_modify, Other, Reason}} ->
+            {error, {unable_to_favorite, Other, Reason}}
+    end.
+
+-spec unfavorite(string(),string(),string()) ->
+                    {'error',{'unable_to_unfavorite',_,_}} | {'ok',_}.
+unfavorite(ConsumerKey, AccessToken, ItemId) ->
+    case modify(ConsumerKey, AccessToken, unfavorite, ItemId) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, {unable_to_modify, Other, Reason}} ->
+            {error, {unable_to_unfavorite, Other, Reason}}
+    end.
+
+-spec tags_add(string(),string(),string(),list(binary())) ->
+                    {'error',{'unable_to_tags_add',_,_}} | {'ok',_}.
+tags_add(ConsumerKey, AccessToken, ItemId, Tags) ->
+    case modify(ConsumerKey, AccessToken,
+           [{actions,
+             [{[
+                {action,  tags_add},
+                {item_id, ItemId},
+                {tags,    eunsure_binary_list(Tags)}
+               ]}]
+            }]) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, Reason} ->
+            {error, {unable_to_tags_add, Reason}}
     end.
 
 -spec is_valid_query(params()) -> boolean().
@@ -309,3 +383,6 @@ to_bin(Value) when is_list(Value) ->
     list_to_binary(Value);
 to_bin(Value) ->
     Value.
+
+eunsure_binary_list(List) ->
+    [to_bin(I) || I <- List].

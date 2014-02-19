@@ -4,4 +4,4 @@
               {registered,[]},
               {applications,[stdlib,kernel]},
               {modules,[erlpocket,erlpocket_tests]},
-              {env,[]}]}.
+              {env,[{verbose,true}]}]}.

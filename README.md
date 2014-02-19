@@ -83,10 +83,37 @@ or function with different arrity.
 ```erlang
 TODO
 ```
-Helper for deleting an existing content (on top of modify API):
+##### Helpers on top of Modify API
+Delete an existing content:
 ```erlang
 {ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:delete(ConsumerKey, AccessToken, "1234").
 ```
+
+Archive an existing content:
+```erlang
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:archive(ConsumerKey, AccessToken, "1234").
+```
+
+Mark an existing content as unread:
+```erlang
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:readd(ConsumerKey, AccessToken, "1234").
+```
+
+Mark an existing content as favorite:
+```erlang
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:favorite(ConsumerKey, AccessToken, "1234").
+```
+
+Remove an existing content from favorites:
+```erlang
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:unfavorite(ConsumerKey, AccessToken, "1234").
+```
+
+Add multiple tags to existing item:
+```erlang
+Tags = [<<"foo">>, <<"bar">>],
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_add(ConsumerKey, AccessToken, ItemId, Tags).
+````
 
 [1]: http://getpocket.com/developer/docs/overview
 [2]: http://getpocket.com/developer/apps/new
