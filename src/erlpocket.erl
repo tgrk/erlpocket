@@ -267,8 +267,12 @@ parse_response(Response, json) ->
     jiffy:decode(to_bin(Response)).
 
 http_request(Url, Json) ->
-    %%TODO: enable tracking based on configuration
-    io:format("DEBUG: json=~p~n", [Json]),
+    case application:get_env(erlpocket, verbose, false) of
+        {ok, true} ->
+            io:format("erlpocket: call url=~p,json=~p~n", [Url, Json]);
+        _ ->
+            ignore
+    end,
     {ok, {{_, Status, _}, _, Response}} =
         httpc:request(
           post,

@@ -6,6 +6,6 @@
                     kernel
                    ]},
    {modules, []},
-   {env, []}
+   {env, [{verbose, true}]}
    ]
 }.
