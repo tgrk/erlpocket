@@ -147,9 +147,7 @@ ItemId = "123",
 ````
 
 ## Example
-```erlang
-TODO
-```
+For example usage of this library please refer to tests.
 
 [1]: http://getpocket.com/developer/docs/overview
 [2]: http://getpocket.com/developer/apps/new
