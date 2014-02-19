@@ -79,9 +79,10 @@ true = erlpocket:is_valid_query([{contentType, video}]).
 or function with different arrity.
 
 #### Modify API
-[Update][6] existing content:
+[Update][6] existing content or add new items in a batch:
 ```erlang
-TODO
+Params = [],
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:modify(ConsumerKey, AccessToken, Params).
 ```
 ##### Helpers on top of Modify API
 Delete an existing content:
