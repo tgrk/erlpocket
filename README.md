@@ -1,4 +1,4 @@
-elrpocket
+2elrpocket
 =========
 
 An Erlang library for Pocket API. For more details see [documentation][1].
@@ -87,33 +87,59 @@ Params = [],
 ##### Helpers on top of Modify API
 Delete an existing content:
 ```erlang
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:delete(ConsumerKey, AccessToken, "1234").
+ItemId = "123",
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:delete(ConsumerKey, AccessToken, ItemId).
 ```
 
 Archive an existing content:
 ```erlang
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:archive(ConsumerKey, AccessToken, "1234").
+ItemId = "123",
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:archive(ConsumerKey, AccessToken, ItemId).
 ```
 
 Mark an existing content as unread:
 ```erlang
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:readd(ConsumerKey, AccessToken, "1234").
+ItemId = "123",
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:readd(ConsumerKey, AccessToken, ItemId).
 ```
 
 Mark an existing content as favorite:
 ```erlang
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:favorite(ConsumerKey, AccessToken, "1234").
+ItemId = "123",
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:favorite(ConsumerKey, AccessToken, ItemId).
 ```
 
 Remove an existing content from favorites:
 ```erlang
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:unfavorite(ConsumerKey, AccessToken, "1234").
+ItemId = "123",
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:unfavorite(ConsumerKey, AccessToken, ItemId).
 ```
 
 Add multiple tags to existing item:
 ```erlang
+ItemId = "123",
 Tags = [<<"foo">>, <<"bar">>],
 {ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_add(ConsumerKey, AccessToken, ItemId, Tags).
+````
+
+Remove multiple tags from an existing item:
+```erlang
+ItemId = "123",
+Tags = [<<"foo">>],
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_remove(ConsumerKey, AccessToken, ItemId, Tags).
+````
+
+Replace multiple tags from an existing item:
+```erlang
+ItemId = "123",
+NewTags = [<<"foo1">>, <<"bar1">>],
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_replace(ConsumerKey, AccessToken, ItemId, NewTags).
+````
+
+Replace multiple tags from an existing item:
+```erlang
+ItemId = "123",
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_clear(ConsumerKey, AccessToken, ItemId).
 ````
 
 [1]: http://getpocket.com/developer/docs/overview

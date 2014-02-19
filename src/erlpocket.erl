@@ -1,7 +1,7 @@
 %%%----------------------------------------------------------------------------
 %%% @author Martin Wiso <tajgur@gmai.com>
 %%% @doc
-%%% Erlang library for Pocket API - http://getpocket.com/developer/docs/
+%%% Erlang library for Pocket v3 API - http://getpocket.com/developer/docs/
 %%% @end
 %%% Created : 25 Feb 2013 by Martin Wiso <tajgur@gmail.com>
 %%%----------------------------------------------------------------------------
@@ -26,7 +26,11 @@
          readd/3,
          favorite/3,
          unfavorite/3,
+
          tags_add/4,
+         tags_remove/4,
+         tags_replace/4,
+         tags_clear/3,
 
          is_valid_query/1,
          is_valid_param/2,
@@ -45,6 +49,7 @@
 -type params() :: list({atom, any()}).
 
 -export_type([result_stats/0, params/0]).
+
 
 %%%============================================================================
 %%% API
@@ -224,6 +229,50 @@ tags_add(ConsumerKey, AccessToken, ItemId, Tags) ->
             {ok, JsonResp};
         {error, Reason} ->
             {error, {unable_to_tags_add, Reason}}
+    end.
+
+-spec tags_remove(string(),string(),string(),list(binary())) ->
+                    {'error',{'unable_to_tags_remove',_,_}} | {'ok',_}.
+tags_remove(ConsumerKey, AccessToken, ItemId, Tags) ->
+    case modify(ConsumerKey, AccessToken,
+           [{actions,
+             [{[
+                {action,  tags_remove},
+                {item_id, ItemId},
+                {tags,    eunsure_binary_list(Tags)}
+               ]}]
+            }]) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, Reason} ->
+            {error, {unable_to_tags_remove, Reason}}
+    end.
+
+-spec tags_replace(string(),string(),string(),list(binary())) ->
+                    {'error',{'unable_to_tags_replace',_,_}} | {'ok',_}.
+tags_replace(ConsumerKey, AccessToken, ItemId, Tags) ->
+    case modify(ConsumerKey, AccessToken,
+           [{actions,
+             [{[
+                {action,  tags_replace},
+                {item_id, ItemId},
+                {tags,    eunsure_binary_list(Tags)}
+               ]}]
+            }]) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, Reason} ->
+            {error, {unable_to_tags_replace, Reason}}
+    end.
+
+-spec tags_clear(string(),string(),string()) ->
+                    {'error',{'unable_to_tags_clear',_,_}} | {'ok',_}.
+tags_clear(ConsumerKey, AccessToken, ItemId) ->
+    case modify(ConsumerKey, AccessToken, tags_clear, ItemId) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, {unable_to_modify, Other, Reason}} ->
+            {error, {unable_to_tags_clear, Other, Reason}}
     end.
 
 -spec is_valid_query(params()) -> boolean().
