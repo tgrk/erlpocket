@@ -134,7 +134,7 @@ NewTags = [<<"foo1">>, <<"bar1">>],
 {ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_replace(ConsumerKey, AccessToken, ItemId, NewTags).
 ````
 
-Replace multiple tags from an existing item:
+Remove multiple tags from an existing item:
 ```erlang
 ItemId = "123",
 {ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_clear(ConsumerKey, AccessToken, ItemId).

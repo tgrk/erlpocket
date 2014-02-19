@@ -40,7 +40,7 @@
          stop/0
         ]).
 
--define(DEPS, [sasl, crypto, asn1, public_key, ssl, inets, jiffy, erlpocket]).
+-define(DEPS, [crypto, asn1, public_key, ssl, inets, jiffy, erlpocket]).
 -define(BASE_URL, "https://getpocket.com/").
 
 %% Types
@@ -263,8 +263,8 @@ tags_rename(ConsumerKey, AccessToken, ItemId, OldTag, NewTag) ->
                   [{[
                      {action,  tags_rename},
                      {item_id, ItemId},
-                     {old_tag, eunsure_binary_list(OldTag)},
-                     {new_tag, eunsure_binary_list(NewTag)}
+                     {old_tag, to_binary(OldTag)},
+                     {new_tag, to_binary(NewTag)}
                     ]}]
                  }]) of
         {ok, JsonResp} ->
@@ -368,6 +368,8 @@ validate_filter(retrieve, {favorite, Value}) ->
     lists:member(Value, [0, 1]);
 validate_filter(retrieve, {tag, Value}) when is_atom(Value) ->
     true;
+validate_filter(retrieve, {tag, Value}) when is_binary(Value) ->
+    true;
 validate_filter(retrieve, {contentType, Value}) ->
     lists:member(Value, [article, image, video]);
 validate_filter(retrieve, {sort, Value}) ->
@@ -405,9 +407,9 @@ parse_response(Response, json) ->
 
 http_request(Url, Json) ->
     case application:get_env(erlpocket, verbose, false) of
-        {ok, true} ->
+        true ->
             io:format("erlpocket: call url=~p,json=~p~n", [Url, Json]);
-        _ ->
+        false ->
             ignore
     end,
     {ok, {{_, Status, _}, _, Response}} =
