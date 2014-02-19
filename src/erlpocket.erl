@@ -147,7 +147,7 @@ modify(ConsumerKey, AccessToken, Params) ->
     case call_api(modify, Json, json) of
         {ok, JsonResp} ->
             {ok, JsonResp};
-        {Other, Reason} ->
+        {error, Reason} ->
             {error, {unable_to_modify, Reason}}
     end.
 
@@ -298,8 +298,8 @@ get_stats(ConsumerKey, AccessToken, {Type, Params}) ->
 
 get_json(ConsumerKey, AccessToken, Params) ->
     jiffy:encode({
-      lists:append([{consumer_key, to_bin(ConsumerKey)},
-                    {access_token, to_bin(AccessToken)}
+      lists:append([{consumer_key, to_binary(ConsumerKey)},
+                    {access_token, to_binary(AccessToken)}
                    ],
                    Params
                   )
@@ -381,7 +381,7 @@ validate_filter(modify, {item_id, _Id}) ->
 parse_response(Response, params) ->
     parse_params(Response);
 parse_response(Response, json) ->
-    jiffy:decode(to_bin(Response)).
+    jiffy:decode(to_binary(Response)).
 
 http_request(Url, Json) ->
     case application:get_env(erlpocket, verbose, false) of
@@ -422,10 +422,10 @@ get_url(authorize_url, Code, RedirectUri) ->
     ?BASE_URL ++ "auth/authorize?request_token=" ++ Code ++ ""
         "&redirect_uri=" ++ RedirectUri.
 
-to_bin(Value) when is_list(Value) ->
+to_binary(Value) when is_list(Value) ->
     list_to_binary(Value);
-to_bin(Value) ->
+to_binary(Value) ->
     Value.
 
 eunsure_binary_list(List) ->
-    [to_bin(I) || I <- List].
+    [to_binary(I) || I <- List].
