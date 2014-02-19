@@ -18,7 +18,7 @@ $ rebar compile
 ## Quick start
 
 ### Authentication
-The Pocket API uses custom implementation of oAuth 2.0 for authorization.
+The Pocket API uses custom implementation of oAuth 2.0 for authentiaction.
 This library provide helper functions to authorize your application.
 
 #### Obtain a platform consumer key
@@ -55,6 +55,7 @@ Stats = erlpocket:stats(ConsumerKey, AccessToken).
 Validate API params:
 ```erlang
 true = erlpocket:is_valid_param(add, [{title, "Foobar"}, {url, "http://foobar"}]).
+true = erlpocket:is_valid_param(retrieve, [{tag, "Foobar"}]).
 ```
 
 #### Retrieve API
@@ -138,6 +139,17 @@ Replace multiple tags from an existing item:
 ItemId = "123",
 {ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_clear(ConsumerKey, AccessToken, ItemId).
 ````
+
+Rename tag of an existing item:
+```erlang
+ItemId = "123",
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_rename(ConsumerKey, AccessToken, ItemId, <<"foo">>, <<"foo1">>).
+````
+
+## Example
+```erlang
+TODO
+```
 
 [1]: http://getpocket.com/developer/docs/overview
 [2]: http://getpocket.com/developer/apps/new

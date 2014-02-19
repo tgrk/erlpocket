@@ -31,6 +31,7 @@
          tags_remove/4,
          tags_replace/4,
          tags_clear/3,
+         tags_rename/5,
 
          is_valid_query/1,
          is_valid_param/2,
@@ -59,8 +60,8 @@
 request_token(ConsumerKey, RedirectUri) ->
     call_api(request_token,
              jiffy:encode(
-               {[{consumer_key, to_bin(ConsumerKey)},
-                 {redirect_uri, to_bin(RedirectUri)}
+               {[{consumer_key, to_binary(ConsumerKey)},
+                 {redirect_uri, to_binary(RedirectUri)}
                 ]}
               ),
              params
@@ -75,8 +76,8 @@ get_authorize_url(Code, RedirectUri) ->
 authorize(ConsumerKey, Code) ->
     call_api(authorize,
              jiffy:encode(
-               {[{consumer_key, to_bin(ConsumerKey)},
-                 {code, to_bin(Code)}
+               {[{consumer_key, to_binary(ConsumerKey)},
+                 {code, to_binary(Code)}
                 ]}
               ),
              params
@@ -114,14 +115,14 @@ stats(ConsumerKey, AccessToken) ->
                  {'error',{'unable_to_add',_}} | {'ok',_}.
 add(ConsumerKey, AccessToken, Url, Tags) ->
     add(ConsumerKey, AccessToken,
-        [{url, to_bin(Url)}, {tags, to_bin(Tags)}]).
+        [{url, to_binary(Url)}, {tags, to_binary(Tags)}]).
 
 -spec add(string(),string(),string(),string(),string()) ->
                  {'error',{'unable_to_add',_}} | {'ok',_}.
 add(ConsumerKey, AccessToken, Url, Tags, TweetId) ->
-    add(ConsumerKey, AccessToken, [{url,      to_bin(Url)},
-                                   {tags,     to_bin(Tags)},
-                                   {tweet_id, to_bin(TweetId)}
+    add(ConsumerKey, AccessToken, [{url,      to_binary(Url)},
+                                   {tags,     to_binary(Tags)},
+                                   {tweet_id, to_binary(TweetId)}
                                   ]).
 
 -spec add(string(),string(), params()) ->
@@ -175,7 +176,7 @@ delete(ConsumerKey, AccessToken, ItemId) ->
     end.
 
 -spec archive(string(),string(),string()) ->
-                    {'error',{'unable_to_archive',_}} | {'ok',_}.
+                     {'error',{'unable_to_archive',_}} | {'ok',_}.
 archive(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, archive, ItemId) of
         {ok, JsonResp} ->
@@ -185,7 +186,7 @@ archive(ConsumerKey, AccessToken, ItemId) ->
     end.
 
 -spec readd(string(),string(),string()) ->
-                    {'error',{'unable_to_readd',_}} | {'ok',_}.
+                   {'error',{'unable_to_readd',_}} | {'ok',_}.
 readd(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, readd, ItemId) of
         {ok, JsonResp} ->
@@ -195,7 +196,7 @@ readd(ConsumerKey, AccessToken, ItemId) ->
     end.
 
 -spec favorite(string(),string(),string()) ->
-                    {'error',{'unable_to_favorite',_,_}} | {'ok',_}.
+                      {'error',{'unable_to_favorite',_}} | {'ok',_}.
 favorite(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, favorite, ItemId) of
         {ok, JsonResp} ->
@@ -205,7 +206,7 @@ favorite(ConsumerKey, AccessToken, ItemId) ->
     end.
 
 -spec unfavorite(string(),string(),string()) ->
-                    {'error',{'unable_to_unfavorite',_}} | {'ok',_}.
+                        {'error',{'unable_to_unfavorite',_}} | {'ok',_}.
 unfavorite(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, unfavorite, ItemId) of
         {ok, JsonResp} ->
@@ -215,7 +216,7 @@ unfavorite(ConsumerKey, AccessToken, ItemId) ->
     end.
 
 -spec tags_add(string(),string(),string(),list(binary())) ->
-                    {'error',{'unable_to_tags_add',_}} | {'ok',_}.
+                      {'error',{'unable_to_tags_add',_}} | {'ok',_}.
 tags_add(ConsumerKey, AccessToken, ItemId, Tags) ->
     case modify_tags(ConsumerKey, AccessToken, tags_add, ItemId, Tags) of
         {ok, JsonResp} ->
@@ -225,7 +226,7 @@ tags_add(ConsumerKey, AccessToken, ItemId, Tags) ->
     end.
 
 -spec tags_remove(string(),string(),string(),list(binary())) ->
-                    {'error',{'unable_to_tags_remove',_}} | {'ok',_}.
+                         {'error',{'unable_to_tags_remove',_}} | {'ok',_}.
 tags_remove(ConsumerKey, AccessToken, ItemId, Tags) ->
     case modify_tags(ConsumerKey, AccessToken, tags_remove, ItemId, Tags) of
         {ok, JsonResp} ->
@@ -235,7 +236,7 @@ tags_remove(ConsumerKey, AccessToken, ItemId, Tags) ->
     end.
 
 -spec tags_replace(string(),string(),string(),list(binary())) ->
-                    {'error',{'unable_to_tags_replace',_}} | {'ok',_}.
+                          {'error',{'unable_to_tags_replace',_}} | {'ok',_}.
 tags_replace(ConsumerKey, AccessToken, ItemId, Tags) ->
     case modify_tags(ConsumerKey, AccessToken, tags_replace, ItemId, Tags) of
         {ok, JsonResp} ->
@@ -245,13 +246,31 @@ tags_replace(ConsumerKey, AccessToken, ItemId, Tags) ->
     end.
 
 -spec tags_clear(string(),string(),string()) ->
-                    {'error',{'unable_to_tags_clear',_}} | {'ok',_}.
+                        {'error',{'unable_to_tags_clear',_}} | {'ok',_}.
 tags_clear(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, tags_clear, ItemId) of
         {ok, JsonResp} ->
             {ok, JsonResp};
         {error, {unable_to_modify, Reason}} ->
             {error, {unable_to_tags_clear, Reason}}
+    end.
+
+-spec tags_rename(string(),string(),string(),string(),string()) ->
+                         {'error',{'unable_to_tags_rename',_}} | {'ok',_}.
+tags_rename(ConsumerKey, AccessToken, ItemId, OldTag, NewTag) ->
+    case modify(ConsumerKey, AccessToken,
+                [{actions,
+                  [{[
+                     {action,  tags_rename},
+                     {item_id, ItemId},
+                     {old_tag, eunsure_binary_list(OldTag)},
+                     {new_tag, eunsure_binary_list(NewTag)}
+                    ]}]
+                 }]) of
+        {ok, JsonResp} ->
+            {ok, JsonResp};
+        {error, Reason} ->
+            {error, {unable_to_tags_raname, Reason}}
     end.
 
 -spec is_valid_query(params()) -> boolean().
@@ -320,6 +339,7 @@ modify_tags(ConsumerKey, AccessToken, Action, ItemId, Tags) ->
             {error, {unable_to_tags_replace, Reason}}
     end.
 
+%%TODO: header errors - http://getpocket.com/developer/docs/errors
 call_api(UrlType, Json, Type) ->
    case http_request(get_url(UrlType), Json) of
         {200, Response} ->
