@@ -342,15 +342,19 @@ modify_tags(ConsumerKey, AccessToken, Action, ItemId, Tags) ->
 %%TODO: header errors - http://getpocket.com/developer/docs/errors
 call_api(UrlType, Json, Type) ->
    case http_request(get_url(UrlType), Json) of
-        {200, _Headers, Response} ->
+       {200, Headers, Response} ->
+           io:format("headers=~p~n", [Headers]),
            {ok, parse_response(Response, Type)};
-        {400, Headers, _} ->
+       {400, Headers, _} ->
+           io:format("headers=~p~n", [Headers]),
            {error, missing_required_parameters};
-        {403, Headers, _} ->
-            {error, invalid_consumer_key};
-        {_Other, Headers, Reason} ->
-            {error, Reason}
-    end.
+       {403, Headers, _} ->
+           io:format("headers=~p~n", [Headers]),
+           {error, invalid_consumer_key};
+       {_Other, Headers, Reason} ->
+           io:format("headers=~p~n", [Headers]),
+           {error, Reason}
+   end.
 
 validate_filter(add, {url, _Value}) ->
     true;
