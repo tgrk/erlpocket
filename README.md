@@ -17,6 +17,8 @@ $ rebar compile
 
 ## Quick start
 
+View the [Error and Response Headers Documentation][7] for detailed information about API errors. Also check the [Rate Limits][8] of API.
+
 ### Authentication
 The Pocket API uses custom implementation of oAuth 2.0 for authentiaction.
 This library provide helper functions to authorize your application.
@@ -155,3 +157,5 @@ For example usage of this library please refer to tests.
 [4]: http://getpocket.com/developer/docs/v3/retrieve
 [5]: http://getpocket.com/developer/docs/v3/add
 [6]: http://getpocket.com/developer/docs/v3/modify
+[7]: http://getpocket.com/developer/docs/errors
+[8]: http://getpocket.com/developer/docs/rate-limits
