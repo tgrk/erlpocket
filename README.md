@@ -143,7 +143,7 @@ ItemId = "123",
 Rename tag of an existing item:
 ```erlang
 ItemId = "123",
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tags_rename(ConsumerKey, AccessToken, ItemId, <<"foo">>, <<"foo1">>).
+{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:tag_rename(ConsumerKey, AccessToken, ItemId, <<"foo">>, <<"foo1">>).
 ````
 
 ## Example

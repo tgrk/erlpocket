@@ -31,7 +31,7 @@
          tags_remove/4,
          tags_replace/4,
          tags_clear/3,
-         tags_rename/5,
+         tag_rename/5,
 
          is_valid_query/1,
          is_valid_param/2,
@@ -105,7 +105,7 @@ stats(ConsumerKey, AccessToken) ->
                  {total_items,    [{state,       all}]},
                  {total_unread,   [{state,       unread}]},
                  {total_archive,  [{state,       archive}]},
-                 {total_favorite, [{favourite,   1}]},
+                 {total_favorite, [{favorite,    1}]},
                  {total_articles, [{contentType, article}]},
                  {total_videos,   [{contentType, video}]}
                 ],
@@ -255,13 +255,13 @@ tags_clear(ConsumerKey, AccessToken, ItemId) ->
             {error, {unable_to_tags_clear, Reason}}
     end.
 
--spec tags_rename(string(),string(),string(),string(),string()) ->
+-spec tag_rename(string(),string(),string(),string(),string()) ->
                          {'error',{'unable_to_tags_rename',_}} | {'ok',_}.
-tags_rename(ConsumerKey, AccessToken, ItemId, OldTag, NewTag) ->
+tag_rename(ConsumerKey, AccessToken, ItemId, OldTag, NewTag) ->
     case modify(ConsumerKey, AccessToken,
                 [{actions,
                   [{[
-                     {action,  tags_rename},
+                     {action,  tag_rename},
                      {item_id, ItemId},
                      {old_tag, to_binary(OldTag)},
                      {new_tag, to_binary(NewTag)}
@@ -342,13 +342,13 @@ modify_tags(ConsumerKey, AccessToken, Action, ItemId, Tags) ->
 %%TODO: header errors - http://getpocket.com/developer/docs/errors
 call_api(UrlType, Json, Type) ->
    case http_request(get_url(UrlType), Json) of
-        {200, Response} ->
+        {200, _Headers, Response} ->
            {ok, parse_response(Response, Type)};
-        {400, _} ->
+        {400, Headers, _} ->
            {error, missing_required_parameters};
-        {403, _} ->
+        {403, Headers, _} ->
             {error, invalid_consumer_key};
-        {_Other, Reason} ->
+        {_Other, Headers, Reason} ->
             {error, Reason}
     end.
 
@@ -412,7 +412,7 @@ http_request(Url, Json) ->
         false ->
             ignore
     end,
-    {ok, {{_, Status, _}, _, Response}} =
+    {ok, {{_, Status, _}, Headers, Response}} =
         httpc:request(
           post,
           {Url, ["application/json"], "application/json", Json},
@@ -420,7 +420,7 @@ http_request(Url, Json) ->
           []
          ),
 
-    {Status, Response}.
+    {Status, Headers, Response}.
 
 parse_params(Input) ->
     lists:map(fun parse_param/1, string:tokens(Input, "&")).

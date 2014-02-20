@@ -15,21 +15,26 @@
 %% =============================================================================
 erlpocket_test_() ->
     {setup,
-        fun() -> erlpocket:start() end,
+        fun() ->
+                erlpocket:start(),
+                application:set_env(erlpocket, verbose, true)
+        end,
         fun(_) -> erlpocket:stop() end,
         [
-         %% {timeout, 100, {"Unauthorized retrieve call", fun test_unauth_get/0}},
-         %% {timeout, 300, {"Retrieve all items", fun test_get_all/0}},
-         %% {timeout, 100, {"Retrieve unreaded items", fun test_get_unreaded/0}},
-         %% {timeout, 100, {"Retrieve archived items", fun test_get_archive/0}},
-         %% {timeout, 100, {"Retrieve favourite items", fun test_get_favourite/0}},
-         %% {timeout, 100, {"Retrieve items by tag", fun test_get_by_tag/0}},
-         %% {timeout, 300, {"Retrieve items stats", fun test_get_stats/0}},
+         {timeout, 100, {"Unauthorized retrieve call", fun test_unauth_get/0}},
+         {timeout, 300, {"Retrieve all items", fun test_get_all/0}},
+         {timeout, 100, {"Retrieve unreaded items", fun test_get_unreaded/0}},
+         {timeout, 100, {"Retrieve archived items", fun test_get_archive/0}},
+         {timeout, 100, {"Retrieve favourite items", fun test_get_favourite/0}},
+         {timeout, 100, {"Retrieve items by tag", fun test_get_by_tag/0}},
+         {timeout, 300, {"Retrieve items stats", fun test_get_stats/0}},
          {timeout, 100, {"Add a new item", fun test_add/0}},
+         {timeout, 100, {"Mark/unmark item favorite", fun test_favorite/0}},
+         {timeout, 100, {"Archive/readd item", fun test_archive/0}},
          {timeout, 100, {"Add tags to an item", fun test_tags_add/0}},
          {timeout, 100, {"Remove item's tag", fun test_tags_remove/0}},
          {timeout, 100, {"Replace item's tag", fun test_tags_replace/0}},
-         {timeout, 100, {"Rename item's tag", fun test_tags_rename/0}},
+         {timeout, 100, {"Rename item's tag", fun test_tag_rename/0}},
          {timeout, 100, {"Remove item's tags", fun test_modify_tags_clear/0}},
          {timeout, 100, {"Delete an existing item", fun test_modify_delete/0}}
         ]
@@ -79,14 +84,18 @@ test_get_by_tag() ->
                                      [{tag, erlang}]),
     ?assertEqual(ok, Result).
 
-%% test_get_stats() ->
-%%     Keys = read_api_keys(),
-%%     R = erlpocket:stats(
-%%           get_val(consumer_key, Keys),
-%%           get_val(access_token, Keys)
-%%          ),
-%%     ?debugVal(R),
-%%     false.
+test_get_stats() ->
+    Keys = read_api_keys(),
+    Result = erlpocket:stats(
+               get_val(consumer_key, Keys),
+               get_val(access_token, Keys)
+              ),
+    ?assertMatch([{total_items, _},
+                  {total_unread, _},
+                  {total_archive, _},
+                  {total_favorite, _},
+                  {total_articles, _},
+                  {total_videos, _}], Result).
 
 test_add() ->
     Keys = read_api_keys(),
@@ -96,6 +105,32 @@ test_add() ->
                                 "test"),
     ?assertEqual(ok, Result).
 
+test_favorite() ->
+    Keys = read_api_keys(),
+    {ItemId, _} = search_item(Keys),
+    Result1 = erlpocket:favorite(get_val(consumer_key, Keys),
+                                 get_val(access_token, Keys),
+                                 ItemId),
+    ?assertEqual(expected_modify_response(), Result1),
+
+    Result2 = erlpocket:unfavorite(get_val(consumer_key, Keys),
+                                   get_val(access_token, Keys),
+                                   ItemId),
+    ?assertEqual(expected_modify_response(), Result2).
+
+test_archive() ->
+    Keys = read_api_keys(),
+    {ItemId, _} = search_item(Keys),
+    Result1 = erlpocket:archive(get_val(consumer_key, Keys),
+                                get_val(access_token, Keys),
+                                ItemId),
+    ?assertEqual(expected_modify_response(), Result1),
+    Result2 = erlpocket:readd(get_val(consumer_key, Keys),
+                              get_val(access_token, Keys),
+                              ItemId),
+    ?assertMatch({ok,{[{<<"action_results">>,[_]},{<<"status">>,1}]}},
+                 Result2).
+
 test_tags_add() ->
     Keys = read_api_keys(),
     {ItemId, _} = search_item(Keys),
@@ -103,8 +138,7 @@ test_tags_add() ->
                                 get_val(access_token, Keys),
                                 ItemId,
                                 [<<"test">>, <<"test2">>]),
-    ?assertEqual({ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}},
-                 Result).
+    ?assertEqual(expected_modify_response(), Result).
 
 test_tags_remove() ->
     Keys = read_api_keys(),
@@ -112,8 +146,7 @@ test_tags_remove() ->
     Result = erlpocket:tags_remove(get_val(consumer_key, Keys),
                                   get_val(access_token, Keys),
                                   ItemId, [<<"test2">>]),
-    ?assertEqual({ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}},
-                 Result),
+    ?assertEqual(expected_modify_response(), Result),
     ?assertEqual([],  search_item(Keys, <<"test2">>)).
 
 test_tags_replace() ->
@@ -122,18 +155,16 @@ test_tags_replace() ->
     Result = erlpocket:tags_replace(get_val(consumer_key, Keys),
                                     get_val(access_token, Keys),
                                     ItemId, [<<"test3">>]),
-    ?assertEqual({ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}},
-                 Result),
+    ?assertEqual(expected_modify_response(), Result),
     ?assertNotEqual([],  search_item(Keys, <<"test3">>)).
 
-test_tags_rename() ->
+test_tag_rename() ->
     Keys = read_api_keys(),
     {ItemId, _} = search_item(Keys),
-    Result = erlpocket:tags_rename(get_val(consumer_key, Keys),
-                                   get_val(access_token, Keys),
-                                   ItemId, <<"test3">>, <<"test4">>),
-    ?assertEqual({ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}},
-                 Result),
+    Result = erlpocket:tag_rename(get_val(consumer_key, Keys),
+                                  get_val(access_token, Keys),
+                                  ItemId, <<"test3">>, <<"test4">>),
+    ?assertEqual(expected_modify_response(), Result),
     ?assertNotEqual([],  search_item(Keys, <<"test4">>)).
 
 test_modify_tags_clear() ->
@@ -142,9 +173,8 @@ test_modify_tags_clear() ->
     Result = erlpocket:tags_clear(get_val(consumer_key, Keys),
                                   get_val(access_token, Keys),
                                   ItemId),
-    ?assertEqual({ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}},
-                 Result),
-    ?assertEqual([],  search_item(Keys, <<"test">>)).
+    ?assertEqual(expected_modify_response(), Result),
+    ?assertEqual([], search_item(Keys, <<"test">>)).
 
 test_modify_delete() ->
     Keys = read_api_keys(),
@@ -152,8 +182,7 @@ test_modify_delete() ->
     Result = erlpocket:delete(get_val(consumer_key, Keys),
                               get_val(access_token, Keys),
                               ItemId),
-    ?assertEqual({ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}},
-                 Result).
+    ?assertEqual(expected_modify_response(), Result).
 
 %%%============================================================================
 %%% Internal functionality
@@ -191,6 +220,12 @@ search_item(Keys, Tag) ->
         []                   -> [];
         {[{ItemId, {Item}}]} -> {ItemId, Item}
     end.
+
+expected_modify_response() ->
+    expected_modify_response(true).
+
+expected_modify_response(Result) ->
+    {ok,{[{<<"action_results">>,[Result]},{<<"status">>,1}]}}.
 
 get_val(Key, PL) ->
     proplists:get_value(Key, PL).
