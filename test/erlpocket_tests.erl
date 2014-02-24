@@ -21,8 +21,10 @@ erlpocket_test_() ->
      end,
      fun(_) -> erlpocket:stop() end,
      [
+      {timeout, 100, {"Custom oAuth test", fun test_oauth/0}},
       {timeout, 100, {"Unauthorized retrieve call", fun test_unauth_get/0}},
       {timeout, 300, {"Retrieve all items", fun test_get_all/0}},
+      {timeout, 100, {"Validate params", fun test_validate_params/0}},
       {timeout, 100, {"Retrieve unreaded items", fun test_get_unreaded/0}},
       {timeout, 100, {"Retrieve archived items", fun test_get_archive/0}},
       {timeout, 100, {"Retrieve favourite items", fun test_get_favourite/0}},
@@ -41,6 +43,32 @@ erlpocket_test_() ->
     }.
 
 %% =============================================================================
+test_oauth() ->
+    Keys = read_api_keys(),
+    Url = "http://https://github.com/tgrk/erlpocket/",
+    {ok, _Headers, [{code, Code}]} =
+        erlpocket:request_token(get_val(consumer_key, Keys), Url),
+
+    AuthUrl = erlpocket:get_authorize_url(Code, Url),
+    [_, Args] = string:tokens(AuthUrl, "?"),
+    [Arg1, Arg2] = string:tokens(Args, "&"),
+    ?assertEqual("request_token=" ++ Code, Arg1),
+    ?assertEqual("redirect_uri=" ++ Url, Arg2),
+
+    %% since we didn't click on authorization url, final oAuth step should fail
+    ?assertEqual(
+       {error,{invalid_consumer_key,
+            [{"x-error","User rejected code."},
+             {"x-error-code","158"},
+             {"x-limit-key-limit",[]},
+             {"x-limit-key-remaining",[]},
+             {"x-limit-key-reset",[]},
+             {"x-limit-user-limit",[]},
+             {"x-limit-user-remaining",[]},
+             {"x-limit-user-reset",[]},
+             {"x-source","Pocket"}]}},
+       erlpocket:authorize(get_val(consumer_key, Keys), Code)).
+
 test_unauth_get() ->
     Keys = read_api_keys(),
     {Result, _} = erlpocket:retrieve(get_val(consumer_key, Keys), "foo", []),
@@ -51,6 +79,12 @@ test_get_all() ->
     {Result, _, _} = erlpocket:retrieve(get_val(consumer_key, Keys),
                                         get_val(access_token, Keys), []),
     ?assertEqual(ok, Result).
+
+test_validate_params() ->
+    ?assertEqual(true, erlpocket:is_valid_param(add, [{url, "http://foobar"}])),
+    ?assertEqual(true, erlpocket:is_valid_param(modify, [{action, tags_clear}])),
+    ?assertEqual(false, erlpocket:is_valid_query([{url, "http://foobar"}])),
+    ?assertEqual(false, erlpocket:is_valid_param(modify, [{foo, tags_clear}])).
 
 test_get_unreaded() ->
     Keys = read_api_keys(),

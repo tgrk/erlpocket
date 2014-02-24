@@ -392,7 +392,9 @@ validate_filter(modify, {action, Value}) when is_atom(Value) ->
 validate_filter(modify, {action, _Value}) ->
     false;
 validate_filter(modify, {item_id, _Id}) ->
-    true.
+    true;
+validate_filter(_, _) ->
+    false.
 
 parse_response(Response, params) ->
     parse_params(Response);
