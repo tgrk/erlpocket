@@ -87,7 +87,7 @@ retrieve(ConsumerKey, AccessToken, Query) ->
                     {error, {unable_to_retrieve, Headers}}
             end;
         false ->
-            throw({invalid_retrieve_params, Query})
+            {error, {invalid_retrieve_params, Query}}
     end.
 
 -spec stats(string(),string()) -> result_stats().
@@ -102,7 +102,7 @@ stats(ConsumerKey, AccessToken) ->
                 ],
     [get_stats(ConsumerKey, AccessToken, T) || T <- Templates].
 
--spec add(string(),string(),string(), string()) -> result_ok() | result_error().
+-spec add(string(),string(),string(),string()) -> result_ok() | result_error().
 add(ConsumerKey, AccessToken, Url, Tags) ->
     add(ConsumerKey, AccessToken,
         [{url, to_binary(Url)}, {tags, to_binary(Tags)}]).
@@ -114,7 +114,7 @@ add(ConsumerKey, AccessToken, Url, Tags, TweetId) ->
                                    {tags,     to_binary(Tags)},
                                    {tweet_id, to_binary(TweetId)}]).
 
--spec add(string(),string(), params()) -> result_ok() | result_error().
+-spec add(string(),string(),params()) -> result_ok() | result_error().
 add(ConsumerKey, AccessToken, Query) ->
     case is_valid_param(add, Query) of
         true ->
@@ -126,17 +126,22 @@ add(ConsumerKey, AccessToken, Query) ->
                     {error, {unable_to_add, Headers}}
             end;
         false ->
-            throw({invalid_add_params, Query})
+            {error, {invalid_add_params, Query}}
     end.
 
 -spec modify(string(),string(),params()) -> result_ok() | result_error().
-modify(ConsumerKey, AccessToken, Params) ->
-    Json = get_json(ConsumerKey, AccessToken, Params),
-    case call_api(modify, Json, json) of
-        {ok, Headers, JsonResp} ->
-            {ok, Headers, JsonResp};
-        {error, Headers} ->
-            {error, {unable_to_modify, Headers}}
+modify(ConsumerKey, AccessToken, Query) ->
+    case is_valid_param(modify, Query) of
+        true ->
+            Json = get_json(ConsumerKey, AccessToken, Query),
+            case call_api(modify, Json, json) of
+                {ok, Headers, JsonResp} ->
+                    {ok, Headers, JsonResp};
+                {error, Headers} ->
+                    {error, {unable_to_modify, Headers}}
+            end;
+        false ->
+            {error, {invalid_modify_params, Query}}
     end.
 
 -spec modify(string(),string(),atom(),string()) -> result_ok() | result_error().
@@ -319,6 +324,7 @@ call_api(UrlType, Json, Type) ->
            {error, Headers}
    end.
 
+%%TODO: review params for add/modify and retrieve
 validate_filter(add, {url, _Value}) ->
     true;
 validate_filter(add, {title, _Value}) ->
@@ -351,6 +357,8 @@ validate_filter(retrieve, {since, Value})
 validate_filter(retrieve, {count, Value}) when is_integer(Value) ->
     true;
 validate_filter(retrieve, {offset, Value}) when is_integer(Value)->
+    true;
+validate_filter(modify, {actions, Value}) when is_list(Value) ->
     true;
 validate_filter(modify, {action, Value}) when is_atom(Value) ->
     true;
