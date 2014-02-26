@@ -15,16 +15,14 @@
 %% =============================================================================
 erlpocket_test_() ->
     {setup,
-     fun() ->
-             erlpocket:start(),
-             application:set_env(erlpocket, verbose, true)
-     end,
+     fun() -> erlpocket:start() end,
      fun(_) -> erlpocket:stop() end,
      [
       {timeout, 100, {"Custom oAuth test", fun test_oauth/0}},
       {timeout, 100, {"Unauthorized retrieve call", fun test_unauth_get/0}},
       {timeout, 300, {"Retrieve all items", fun test_get_all/0}},
       {timeout, 100, {"Validate params", fun test_validate_params/0}},
+      {timeout, 100, {"Invalid params check", fun test_invalid_params_check/0}},
       {timeout, 100, {"Retrieve unreaded items", fun test_get_unreaded/0}},
       {timeout, 100, {"Retrieve archived items", fun test_get_archive/0}},
       {timeout, 100, {"Retrieve favourite items", fun test_get_favourite/0}},
@@ -85,6 +83,20 @@ test_validate_params() ->
     ?assertEqual(true, erlpocket:is_valid_param(modify, [{action, tags_clear}])),
     ?assertEqual(false, erlpocket:is_valid_query([{url, "http://foobar"}])),
     ?assertEqual(false, erlpocket:is_valid_param(modify, [{foo, tags_clear}])).
+
+test_invalid_params_check() ->
+    Keys = read_api_keys(),
+    ?assertEqual({error,{invalid_retrieve_params,[{foo,bar}]}},
+                 erlpocket:retrieve(get_val(consumer_key, Keys),
+                                    get_val(access_token, Keys), [{foo, bar}])),
+
+    ?assertEqual({error,{invalid_add_params,[{foo,bar}]}},
+                 erlpocket:add(get_val(consumer_key, Keys),
+                               get_val(access_token, Keys), [{foo, bar}])),
+
+    ?assertEqual({error,{invalid_modify_params,[{foo,bar}]}},
+                 erlpocket:modify(get_val(consumer_key, Keys),
+                                  get_val(access_token, Keys), [{foo, bar}])).
 
 test_get_unreaded() ->
     Keys = read_api_keys(),
