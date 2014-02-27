@@ -3,16 +3,11 @@ elrpocket
 
 An Erlang library for Pocket API. For more details see [documentation][1].
 
-## Fetch dependencies
+## Fetch dependencies and compile
 
 Project depends on [jiffy][3] library for JSON parsing.
 ```
-$ rebar get-deps
-```
-
-## Compile
-```
-$ rebar compile
+$ rebar get-deps compile
 ```
 
 ## Quick start
@@ -79,11 +74,8 @@ true = erlpocket:is_valid_query([{contentType, video}]).
 or function with different arrity.
 
 #### Modify API
-[Update][6] existing content or add new items in a batch:
-```erlang
-Params = [],
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]} = erlpocket:modify(ConsumerKey, AccessToken, Params).
-```
+[Update][6] existing content. There are multiple helpers to ease work with this API call.
+
 ##### Helpers on top of Modify API
 Delete an existing content:
 ```erlang

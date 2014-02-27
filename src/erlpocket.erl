@@ -324,7 +324,6 @@ call_api(UrlType, Json, Type) ->
            {error, Headers}
    end.
 
-%%TODO: review params for add/modify and retrieve
 validate_filter(add, {url, _Value}) ->
     true;
 validate_filter(add, {title, _Value}) ->
@@ -359,6 +358,7 @@ validate_filter(retrieve, {count, Value}) when is_integer(Value) ->
 validate_filter(retrieve, {offset, Value}) when is_integer(Value)->
     true;
 validate_filter(modify, {actions, Value}) when is_list(Value) ->
+    %TODO: implement validation of nested params
     true;
 validate_filter(modify, {action, Value}) when is_atom(Value) ->
     true;
