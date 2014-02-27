@@ -143,9 +143,6 @@ ItemId = "123",
 ## Example
 For example usage of this library please refer to tests.
 
-## TODO
-* improve query parameters validation
-* simplify work with query parameters
 
 [1]: http://getpocket.com/developer/docs/overview
 [2]: http://getpocket.com/developer/apps/new
