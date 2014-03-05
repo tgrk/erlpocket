@@ -1,7 +1,7 @@
 elrpocket
 =========
 
-An Erlang library for Pocket API (www.getpocket.com). For more details see [documentation][1].
+An Erlang library for Pocket API (www.getpocket.com) v3. For more details see [documentation][1].
 
 ## Fetch dependencies and compile
 
