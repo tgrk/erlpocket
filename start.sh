@@ -1,2 +1,2 @@
 #!/bin/bash
-erl -pa ebin deps/*/ebin -s erlpocket -s reloader
+erl -pa ebin deps/*/ebin -s erlpocket
