@@ -23,6 +23,7 @@ erlpocket_test_() ->
       {timeout, 300, {"Retrieve all items", fun test_get_all/0}},
       {timeout, 100, {"Validate params", fun test_validate_params/0}},
       {timeout, 100, {"Invalid params check", fun test_invalid_params_check/0}},
+      {timeout, 100, {"Test maps support", fun test_maps_support/0}},
       {timeout, 100, {"Retrieve unreaded items", fun test_get_unreaded/0}},
       {timeout, 100, {"Retrieve archived items", fun test_get_archive/0}},
       {timeout, 100, {"Retrieve favourite items", fun test_get_favourite/0}},
@@ -30,7 +31,7 @@ erlpocket_test_() ->
       {timeout, 300, {"Retrieve items stats", fun test_get_stats/0}},
       {timeout, 100, {"Add a new item", fun test_add/0}},
       {timeout, 100, {"Mark/unmark item favorite", fun test_favorite/0}},
-      {timeout, 100, {"Archive/readd item", fun test_archive/0}},
+      {timeout, 100, {"Archive/read item", fun test_archive/0}},
       {timeout, 100, {"Add tags to an item", fun test_tags_add/0}},
       {timeout, 100, {"Remove item's tag", fun test_tags_remove/0}},
       {timeout, 100, {"Replace item's tag", fun test_tags_replace/0}},
@@ -97,6 +98,20 @@ test_invalid_params_check() ->
     ?assertEqual({error,{invalid_modify_params,[{foo,bar}]}},
                  erlpocket:modify(get_val(consumer_key, Keys),
                                   get_val(access_token, Keys), [{foo, bar}])).
+
+test_maps_support() ->
+    Keys = read_api_keys(),
+    ok = application:set_env(erlpocket, return_maps, true),
+    ?assertEqual({ok, true}, application:get_env(erlpocket, return_maps)),
+
+    {ok, Headers, Results} = erlpocket:retrieve(
+                               get_val(consumer_key, Keys),
+                               get_val(access_token, Keys),
+                               [{state, archive}]
+                              ),
+    ?assert(erlang:is_map(Headers)),
+    ?assert(erlang:is_map(Results)),
+    application:set_env(erlpocket, return_maps, false).
 
 test_get_unreaded() ->
     Keys = read_api_keys(),
