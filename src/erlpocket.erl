@@ -281,10 +281,12 @@ stop() ->
 %%% Internal functionality
 %%%============================================================================
 get_items(ConsumerKey, AccessToken, Filter) ->
-    {ok, _, {[{<<"status">>,   1},
-              {<<"complete">>, 1},
-              {<<"list">>,     {Items}},
-              {<<"since">>,    _Since}
+    {ok, _, {[{<<"status">>,      1},
+              {<<"complete">>,    1},
+              {<<"list">>,        {Items}},
+              {<<"error">>,       _Error},
+              {<<"search_meta">>, _SearchType},
+              {<<"since">>,       _Since}
           ]}} = retrieve(ConsumerKey, AccessToken, Filter),
     Items.
 
@@ -370,7 +372,10 @@ validate_filter(_, _) ->
 parse_response(Response, params) ->
     parse_params(Response);
 parse_response(Response, json) ->
-    jiffy:decode(to_binary(Response)).
+    case return_maps() of
+        false -> jiffy:decode(to_binary(Response));
+        true  -> jiffy:decode(to_binary(Response), [return_maps])
+    end.
 
 http_request(Url, Json) ->
     case application:get_env(erlpocket, verbose, false) of
@@ -397,7 +402,11 @@ filter_headers(H) ->
             "x-limit-key-remaining", "x-limit-key-reset",
             "x-limit-user-limit", "x-limit-user-remaining",
             "x-limit-user-reset", "x-source"],
-    [{K, proplists:get_value(K, H, "")} || K <- Keys].
+    Filtered = [{K, proplists:get_value(K, H, "")} || K <- Keys],
+    case return_maps() of
+        false -> Filtered;
+        true  -> maps:from_list(Filtered)
+    end.
 
 get_url(request_token) ->
     ?BASE_URL ++ "v3/oauth/request";
@@ -421,3 +430,6 @@ to_binary(Value) ->
 
 eunsure_binary_list(List) ->
     [to_binary(I) || I <- List].
+
+return_maps() ->
+    application:get_env(erlpocket, return_maps, false).

@@ -6,6 +6,9 @@
                     kernel
                    ]},
    {modules, []},
-   {env, [{verbose, false}]}
+   {env, [
+          {return_maps, false},
+          {verbose,     false}
+         ]}
    ]
 }.

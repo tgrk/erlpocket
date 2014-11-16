@@ -143,7 +143,8 @@ test_add() ->
     Keys = read_api_keys(),
     {Result, _, _} = erlpocket:add(get_val(consumer_key, Keys),
                                    get_val(access_token, Keys),
-                                   "http://www.erlang.org/", "test"),
+                                   "http://www.erlang.org/",
+                                   "test"),
     ?assertEqual(ok, Result).
 
 test_favorite() ->
@@ -208,7 +209,7 @@ test_tag_rename() ->
                                   ItemId, <<"test3">>, <<"test4">>),
     ?assertMatch({ok, _, {[{<<"action_results">>,[true]},{<<"status">>,1}]}},
                  Result),
-    ?assertNotEqual([],  search_item(Keys, <<"test4">>)).
+    ?assertNotEqual([], search_item(Keys, <<"test4">>)).
 
 test_modify_tags_clear() ->
     Keys = read_api_keys(),
@@ -241,7 +242,7 @@ search_item(Keys) ->
                       get_val(consumer_key, Keys),
                       get_val(access_token, Keys),
                       [{search, <<"Erlang Programming Language">>}]
-                     ),
+         ),
     case get_val(<<"list">>, PL)  of
         []                   -> [];
         {[{ItemId, {Item}}]} -> {ItemId, Item}
@@ -251,8 +252,7 @@ search_item(Keys, Tag) ->
     {ok, _, {PL}} = erlpocket:retrieve(
                       get_val(consumer_key, Keys),
                       get_val(access_token, Keys),
-                      [{search, <<"Erlang Programming Language">>},
-                       {tag, Tag}]),
+                      [{tag, Tag}]),
     case get_val(<<"list">>, PL)  of
         []                   -> [];
         {[{ItemId, {Item}}]} -> {ItemId, Item}
