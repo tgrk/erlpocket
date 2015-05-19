@@ -386,7 +386,7 @@ http_request(Url, Json) ->
     end,
     {ok, {{_, Status, _}, Headers, Response}} =
         httpc:request(post,
-                      {Url, ["application/json"], "application/json", Json},
+                      {Url, [], "application/json", Json},
                       [{timeout, infinity}], []),
     {Status, filter_headers(Headers), Response}.
 
