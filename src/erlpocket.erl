@@ -92,14 +92,12 @@ retrieve(ConsumerKey, AccessToken, Query) ->
 
 -spec stats(string(),string()) -> result_stats().
 stats(ConsumerKey, AccessToken) ->
-    Templates = [
-                 {total_items,    [{state,       all}]},
+    Templates = [{total_items,    [{state,       all}]},
                  {total_unread,   [{state,       unread}]},
                  {total_archive,  [{state,       archive}]},
                  {total_favorite, [{favorite,    1}]},
                  {total_articles, [{contentType, article}]},
-                 {total_videos,   [{contentType, video}]}
-                ],
+                 {total_videos,   [{contentType, video}]}],
     [get_stats(ConsumerKey, AccessToken, T) || T <- Templates].
 
 -spec add(string(),string(),string(),string()) -> result_ok() | result_error().
@@ -281,12 +279,14 @@ stop() ->
 %%% Internal functionality
 %%%============================================================================
 get_items(ConsumerKey, AccessToken, Filter) ->
-    {ok, _, {[{<<"status">>,   1},
-              {<<"complete">>, 1},
-              {<<"list">>,     {Items}},
-              {<<"since">>,    _Since}
-          ]}} = retrieve(ConsumerKey, AccessToken, Filter),
-    Items.
+    case retrieve(ConsumerKey, AccessToken, Filter) of
+        {ok, _Headers, {Response}} ->
+            {Items} = proplists:get_value(<<"list">>, Response, {[]}),
+            Items;
+        Other ->
+            maybe_verbose("unable to retrieve items: ~p~n", [Other]),
+            []
+    end.
 
 get_stats(ConsumerKey, AccessToken, {Type, Params}) ->
     Items = get_items(ConsumerKey, AccessToken,
@@ -373,12 +373,7 @@ parse_response(Response, json) ->
     jiffy:decode(to_binary(Response)).
 
 http_request(Url, Json) ->
-    case application:get_env(erlpocket, verbose, false) of
-        true ->
-            io:format("erlpocket: call url=~p,json=~p~n", [Url, Json]);
-        false ->
-            ignore
-    end,
+    maybe_verbose("call url=~p,json=~p~n", [Url, Json]),
     {ok, {{_, Status, _}, Headers, Response}} =
         httpc:request(post,
                       {Url, ["application/json"], "application/json", Json},
@@ -398,6 +393,14 @@ filter_headers(H) ->
             "x-limit-user-limit", "x-limit-user-remaining",
             "x-limit-user-reset", "x-source"],
     [{K, proplists:get_value(K, H, "")} || K <- Keys].
+
+maybe_verbose(Text, Args) ->
+    case application:get_env(erlpocket, verbose, false) of
+        true ->
+            io:format("erlpocket: " ++ Text, Args);
+        false ->
+            ignore
+    end.
 
 get_url(request_token) ->
     ?BASE_URL ++ "v3/oauth/request";
