@@ -7,6 +7,10 @@ An Erlang library for Pocket API (www.getpocket.com) v3. For more details see [d
 
 Project depends on [jiffy][3] library for JSON parsing.
 ```
+$ rebar3 update compile
+```
+or
+```
 $ rebar get-deps compile
 ```
 

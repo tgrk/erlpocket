@@ -1,0 +1,12 @@
+case erlang:function_exported(rebar3, main, 1) of
+    true ->
+        %% rebar3
+        CONFIG;
+    false ->
+        %% rebar 2.x or older
+        NewConf = lists:keystore(deps_dir, 1, CONFIG, {deps_dir, "deps"}),
+        Deps = [{jiffy, "0.*",
+                 {git, "https://github.com/davisp/jiffy.git", "0.14.7"}}
+               ],
+        lists:keystore(deps, 1, NewConf, {deps, Deps})
+end.
