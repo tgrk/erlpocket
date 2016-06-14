@@ -33,13 +33,9 @@
          tag_rename/5,
 
          is_valid_query/1,
-         is_valid_param/2,
-
-         start/0,
-         stop/0
+         is_valid_param/2
         ]).
 
--define(DEPS, [crypto, asn1, public_key, ssl, inets, jiffy, erlpocket]).
 -define(BASE_URL, "https://getpocket.com/").
 
 %% Types
@@ -263,17 +259,6 @@ is_valid_query(Filters) ->
 -spec is_valid_param(atom(),params()) -> boolean().
 is_valid_param(Type, Filters) ->
     not lists:member(false, [validate_filter(Type, F) || F <- Filters]).
-
--spec start() -> ok.
-start() ->
-    [application:start(A) || A <- ?DEPS],
-    ok.
-
--spec stop() -> ok.
-stop() ->
-    [application:stop(A) || A <- ?DEPS],
-    ok.
-
 
 %%%============================================================================
 %%% Internal functionality

@@ -15,12 +15,12 @@
 %% =============================================================================
 erlpocket_test_() ->
     {setup,
-     fun() -> erlpocket:start() end,
-     fun(_) -> erlpocket:stop() end,
+     fun() -> application:ensure_all_started(erlpocket) end,
+     fun(_) -> ok end,
      [
       {timeout, 100, {"Custom oAuth test", fun test_oauth/0}},
       {timeout, 100, {"Unauthorized retrieve call", fun test_unauth_get/0}},
-      {timeout, 300, {"Retrieve all items", fun test_get_all/0}},
+      {timeout, 600, {"Retrieve all items", fun test_get_all/0}},
       {timeout, 100, {"Validate params", fun test_validate_params/0}},
       {timeout, 100, {"Invalid params check", fun test_invalid_params_check/0}},
       {timeout, 100, {"Retrieve unreaded items", fun test_get_unreaded/0}},
@@ -230,9 +230,10 @@ test_modify_delete() ->
 %%% Internal functionality
 %%%============================================================================
 read_api_keys() ->
-    case file:consult("../api.txt") of
-        {ok,[Keys]} -> Keys;
-        _ -> throw("Unable to read credentials from api.txt file!")
+    case file:consult("api.txt") of
+        {ok, [Keys]} -> Keys;
+        _ ->
+            throw("Unable to read credentials from api.txt file!")
     end.
 
 search_item(Keys) ->
