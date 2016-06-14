@@ -16,6 +16,11 @@ $ rebar get-deps compile
 
 ## Quick start
 
+To run all required dependencies start with:
+```erlang
+_ = application:ensure_all_started(erlpocket).
+```
+
 View the [Error and Response Headers Documentation][7] for detailed information about API errors. Also check the [Rate Limits][8] of API.
 
 ### Authentication
@@ -144,7 +149,7 @@ ItemId = "123",
 ````
 
 ## Example
-For example usage of this library please refer to tests.
+For example usage of this library please refer to tests. Note that tests are are using real API endpoints (copy template `api.sample.txt` as `api.txt` and fill your Pocket Appplication creadentials there).
 
 
 [1]: http://getpocket.com/developer/docs/overview
