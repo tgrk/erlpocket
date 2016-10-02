@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/tgrk/erlpocket.svg?branch=master)](https://travis-ci.org/tgrk/erlpocket)
+[![Hex pm](http://img.shields.io/hexpm/v/erlpocket.svg?style=flat)](https://hex.pm/packages/erlpocket)
+
 elrpocket
 =========
 
@@ -7,10 +10,19 @@ An Erlang library for Pocket API (www.getpocket.com) v3. For more details see [d
 
 Project depends on [jiffy][3] library for JSON parsing.
 ```
+$ rebar3 update compile
+```
+or
+```
 $ rebar get-deps compile
 ```
 
 ## Quick start
+
+To run all required dependencies start with:
+```erlang
+_ = application:ensure_all_started(erlpocket).
+```
 
 View the [Error and Response Headers Documentation][7] for detailed information about API errors. Also check the [Rate Limits][8] of API.
 
@@ -27,7 +39,6 @@ RedirectUri = "http://www.foo.com/",
 ConsumerKey = "<app-consumer-key>",
 {ok, [{code, Code}]} = erlpocket:request_token(ConsumerKey, RedirectUri).
 ```
-#### Obtain a request token
 Use returned security token(code) to get URL that will authorize your
 application on Pocket website.
 ```erlang
@@ -141,7 +152,7 @@ ItemId = "123",
 ````
 
 ## Example
-For example usage of this library please refer to tests.
+For example usage of this library please refer to tests. Note that tests are are using real API endpoints (copy template `api.sample.txt` as `api.txt` and fill your Pocket Appplication creadentials there).
 
 
 [1]: http://getpocket.com/developer/docs/overview

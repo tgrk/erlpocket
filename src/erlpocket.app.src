@@ -1,14 +1,19 @@
 {application, erlpocket,
    [{description, "Erlang library for Pocket API"},
-    {vsn, "0.1"},
+    {vsn, "1.2.1"},
     {registered, []},
     {applications, [stdlib,
-                    kernel
+                    kernel,
+                    crypto,
+                    public_key,
+                    ssl,
+                    inets
                    ]},
-   {modules, []},
-   {env, [
-          {return_maps, false},
+   {env, [{return_maps, false},
           {verbose,     false}
-         ]}
+         ]},
+   {maintainers,["Martin Wiso"]},
+   {licenses,["MIT"]},
+   {links,[{"Github","https://github.com/tgrk/erlpocket"}]}
    ]
 }.

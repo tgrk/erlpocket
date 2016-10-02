@@ -6,3 +6,7 @@ deps
 *.beam
 *.plt
 api.txt
+.rebar/
+"TEST-file_\"erlpocket.app\".xml"
+_build/
+rebar.lock
