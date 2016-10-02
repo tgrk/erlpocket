@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tgrk/erlpocket.svg?branch=master)](https://travis-ci.org/edgurgel/erlpocket)
+[![Build Status](https://travis-ci.org/tgrk/erlpocket.svg?branch=master)](https://travis-ci.org/tgrk/erlpocket)
 [![Hex pm](http://img.shields.io/hexpm/v/erlpocket.svg?style=flat)](https://hex.pm/packages/erlpocket)
 
 elrpocket
