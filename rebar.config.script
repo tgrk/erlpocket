@@ -6,9 +6,9 @@ case erlang:function_exported(rebar3, main, 1) of
         %% rebar 2.x or older
         NewConf = lists:keystore(deps_dir, 1, CONFIG, {deps_dir, "deps"}),
         Deps = [{jiffy, "0.*",
-                 {git, "https://github.com/davisp/jiffy.git", "0.14.7"}},
+                 {git, "https://github.com/davisp/jiffy.git", {tag, "0.14.7"}}},
                 {eunit_formatters, ".*",
-                 {git, "git://github.com/seancribbs/eunit_formatters", "0.3.1"}}
+                 {git, "https://github.com/seancribbs/eunit_formatters.git", {tag, "v0.3.1"}}}
                ],
         lists:keystore(deps, 1, NewConf, {deps, Deps})
 end.
