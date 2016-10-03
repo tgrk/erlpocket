@@ -8,33 +8,38 @@
 -module(erlpocket).
 
 %% API
--export([request_token/2,
-         get_authorize_url/2,
-         authorize/2,
+-export([ request_token/2
+        , get_authorize_url/2
+        , authorize/2
 
-         stats/2,
-         retrieve/3,
-         add/3,
-         add/4,
-         add/5,
-         modify/3,
-         modify/4,
+        , stats/2
+        , retrieve/3
+        , add/3
+        , add/4
+        , add/5
+        , modify/3
+        , modify/4
 
-         delete/3,
-         archive/3,
-         readd/3,
-         favorite/3,
-         unfavorite/3,
+        , delete/3
+        , archive/3
+        , readd/3
+        , favorite/3
+        , unfavorite/3
 
-         tags_add/4,
-         tags_remove/4,
-         tags_replace/4,
-         tags_clear/3,
-         tag_rename/5,
+        , tags_add/4
+        , tags_remove/4
+        , tags_replace/4
+        , tags_clear/3
+        , tag_rename/5
 
-         is_valid_query/1,
-         is_valid_param/2
+        , is_valid_query/1
+        , is_valid_param/2
         ]).
+
+%% for testing only
+-ifdef(TEST).
+-export([get_url/1, to_binary/1]).
+-endif.
 
 -define(BASE_URL, "https://getpocket.com/").
 
@@ -309,6 +314,40 @@ call_api(UrlType, Json, Type) ->
            {error, Headers}
    end.
 
+http_request(Url, Json) ->
+    maybe_verbose("call url=~p,json=~p~n", [Url, Json]),
+    {ok, {{_, Status, _}, Headers, Response}} =
+        httpc:request(post,
+                      {Url, [], "application/json", Json},
+                      [{timeout, infinity}], []),
+    {Status, filter_headers(Headers), Response}.
+
+parse_response(Response, params) ->
+    parse_params(Response);
+parse_response(Response, json) ->
+    case return_maps() of
+        false -> jiffy:decode(to_binary(Response));
+        true  -> jiffy:decode(to_binary(Response), [return_maps])
+    end.
+
+parse_params(Input) ->
+    lists:map(fun parse_param/1, string:tokens(Input, "&")).
+
+parse_param(Input) ->
+    [Key, Value] = string:tokens(Input, "="),
+    {list_to_atom(Key), Value}.
+
+filter_headers(H) ->
+    Keys = ["x-error", "x-error-code", "x-limit-key-limit",
+            "x-limit-key-remaining", "x-limit-key-reset",
+            "x-limit-user-limit", "x-limit-user-remaining",
+            "x-limit-user-reset", "x-source"],
+    Filtered = [{K, proplists:get_value(K, H, "")} || K <- Keys],
+    case return_maps() of
+        false -> Filtered;
+        true  -> maps:from_list(Filtered)
+    end.
+
 validate_filter(add, {url, _Value}) ->
     true;
 validate_filter(add, {title, _Value}) ->
@@ -352,40 +391,6 @@ validate_filter(modify, {item_id, _Id}) ->
 validate_filter(_, _) ->
     false.
 
-parse_response(Response, params) ->
-    parse_params(Response);
-parse_response(Response, json) ->
-    case return_maps() of
-        false -> jiffy:decode(to_binary(Response));
-        true  -> jiffy:decode(to_binary(Response), [return_maps])
-    end.
-
-http_request(Url, Json) ->
-    maybe_verbose("call url=~p,json=~p~n", [Url, Json]),
-    {ok, {{_, Status, _}, Headers, Response}} =
-        httpc:request(post,
-                      {Url, [], "application/json", Json},
-                      [{timeout, infinity}], []),
-    {Status, filter_headers(Headers), Response}.
-
-parse_params(Input) ->
-    lists:map(fun parse_param/1, string:tokens(Input, "&")).
-
-parse_param(Input) ->
-    [Key, Value] = string:tokens(Input, "="),
-    {list_to_atom(Key), Value}.
-
-filter_headers(H) ->
-    Keys = ["x-error", "x-error-code", "x-limit-key-limit",
-            "x-limit-key-remaining", "x-limit-key-reset",
-            "x-limit-user-limit", "x-limit-user-remaining",
-            "x-limit-user-reset", "x-source"],
-    Filtered = [{K, proplists:get_value(K, H, "")} || K <- Keys],
-    case return_maps() of
-        false -> Filtered;
-        true  -> maps:from_list(Filtered)
-    end.
-
 maybe_verbose(Text, Args) ->
     case application:get_env(erlpocket, verbose, false) of
         true ->
@@ -411,6 +416,8 @@ get_url(authorize_url, Code, RedirectUri) ->
 
 to_binary(Value) when is_list(Value) ->
     list_to_binary(Value);
+to_binary(Value) when is_atom(Value) ->
+    atom_to_binary(Value, latin1);
 to_binary(Value) ->
     Value.
 
