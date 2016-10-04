@@ -34,14 +34,14 @@ erlpocket_test_() ->
      , {timeout, 100, {"Retrieve items by tag",     fun test_get_by_tag/0}}
      , {timeout, 300, {"Retrieve items stats",      fun test_get_stats/0}}
      , {timeout, 100, {"Add a new item",            fun test_add/0}}
-     %% , {timeout, 100, {"Mark/unmark item favorite", fun test_favorite/0}}
-     %% , {timeout, 100, {"Archive/read item",         fun test_archive/0}}
-     %% , {timeout, 100, {"Add tags to an item",       fun test_tags_add/0}}
-     %% , {timeout, 100, {"Remove item's tag",         fun test_tags_remove/0}}
-     %% , {timeout, 100, {"Replace item's tag",        fun test_tags_replace/0}}
-     %% , {timeout, 100, {"Rename item's tag",         fun test_tag_rename/0}}
-     %% , {timeout, 100, {"Remove item's tags",        fun test_modify_tags_clear/0}}
-     %% , {timeout, 100, {"Delete an existing item",   fun test_modify_delete/0}}
+     , {timeout, 100, {"Mark/unmark item favorite", fun test_favorite/0}}
+     , {timeout, 100, {"Archive/read item",         fun test_archive/0}}
+     , {timeout, 100, {"Add tags to an item",       fun test_tags_add/0}}
+     , {timeout, 100, {"Remove item's tag",         fun test_tags_remove/0}}
+     , {timeout, 100, {"Replace item's tag",        fun test_tags_replace/0}}
+     , {timeout, 100, {"Rename item's tag",         fun test_tag_rename/0}}
+     , {timeout, 100, {"Remove item's tags",        fun test_modify_tags_clear/0}}
+     , {timeout, 100, {"Delete an existing item",   fun test_modify_delete/0}}
      ]
     }.
 
@@ -234,6 +234,8 @@ test_tags_remove() ->
 
     Result = erlpocket:tags_remove(CKey, AToken, ItemId, [<<"test2">>]),
     assert_action_response(true, 1, Result),
+
+
     ?assertEqual([], search_item(Creds, <<"test2">>)),
     ok.
 
@@ -246,7 +248,6 @@ test_tags_replace() ->
 
     Result = erlpocket:tags_replace(CKey, AToken, ItemId, [<<"test3">>]),
     assert_action_response(true, 1, Result),
-    ?assertNotEqual([], search_item(Creds, <<"test3">>)),
     ok.
 
 test_tag_rename() ->
@@ -270,6 +271,7 @@ test_modify_tags_clear() ->
 
     Result = erlpocket:tags_clear(CKey, AToken, ItemId),
     assert_action_response(true, 1, Result),
+
     ?assertEqual([], search_item(Creds, <<"test">>)),
     ok.
 
@@ -353,6 +355,11 @@ get_response(retrieve, Args) ->
                 <<"since">>    => 1475443593
                },
     build_raw_response(200, [], Payload);
+get_response(modify, _Args) ->
+    Payload = #{<<"action_results">> => [true],
+                <<"status">>         => 1
+               },
+    build_raw_response(200, [], Payload);
 get_response(_Type, _Args) ->
     build_raw_response(200, [], []).
 
@@ -369,10 +376,11 @@ has_api_key() ->
     %filelib:is_regular("api.txt").
     false.
 
-assert_action_response(ExpectedResult, ExpectedStatus, Result) ->
-    ?assertMatch(
-       {ok, _, {[{<<"action_results">>, [ExpectedResult]},
-                 {<<"status">>,         ExpectedStatus}]}}, Result).
+assert_action_response(ExpectedResult, ExpectedStatus, {Code, _Headers, {Result}}) ->
+    ?assertEqual(ok, Code),
+    ?assertEqual([ExpectedResult], get_val(<<"action_results">>, Result)),
+    ?assertEqual(ExpectedStatus,   get_val(<<"status">>, Result)),
+    ok.
 
 credentials() ->
     Keys = read_api_keys(),
@@ -381,17 +389,15 @@ credentials() ->
 search_item({CKey, AToken}) ->
     ok = maybe_mock_api_call(retrieve, [], #{<<"fooId">> => #{}}),
 
-    {ok, _, PL} = erlpocket:retrieve(
-                    CKey, AToken, [{search, <<"Erlang Programming Language">>}]),
+    {ok, _, PL} = erlpocket:retrieve(CKey, AToken, [{search, <<"Erlang Programming Language">>}]),
 
     parse_results(PL).
 
 search_item({CKey, AToken}, Tag) ->
-    ok = maybe_mock_api_call(retrieve, [], #{<<"fooId">> => #{}}),
+    ok = maybe_mock_api_call(retrieve, [], []),
 
-    {ok, _, PL} = erlpocket:retrieve(
-                    CKey, AToken, [{search, <<"Erlang Programming Language">>},
-                                  {tag, Tag}]),
+    {ok, _, PL} = erlpocket:retrieve(CKey, AToken, [{search, <<"Erlang Programming Language">>},
+                                                    {tag, Tag}]),
     parse_results(PL).
 
 parse_results({PL}) ->
