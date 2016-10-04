@@ -38,15 +38,16 @@
 
 %% for testing only
 -ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
 -export([get_url/1, to_binary/1]).
 -endif.
 
 -define(BASE_URL, "https://getpocket.com/").
 
 %% Types
--type headers()      :: list({any(), any()}).
--type result_ok()    :: {ok, headers(), any()}.
--type result_error() :: {error, {atom(), headers()}}.
+-type headers()      :: list({any(), any()}) | map().
+-type result_ok()    :: {ok, headers(), list() | map()}.
+-type result_error() :: {error, {atom(), headers()}} | {error, any()}.
 -type result_stats() :: [{total_archive | total_articles | total_favorite
                           | total_items | total_unread | total_videos,
                           non_neg_integer()}].
@@ -58,8 +59,8 @@
 %%%============================================================================
 %%% API
 %%%============================================================================
--spec request_token(string(),string()) ->
-                           {ok, [{code, string()}]} | {error, any()}.
+-spec request_token(string(), string()) ->
+                           {ok, [{code, string()}]} | result_error().
 request_token(ConsumerKey, RedirectUri) ->
     call_api(request_token,
              jiffy:encode({[{consumer_key, to_binary(ConsumerKey)},
@@ -69,14 +70,14 @@ request_token(ConsumerKey, RedirectUri) ->
 get_authorize_url(Code, RedirectUri) ->
     get_url(authorize_url, Code, RedirectUri).
 
--spec authorize(string(),string()) ->
-                       {ok, list({atom(),any()})} | {error, any()}.
+-spec authorize(string(), string()) ->
+                       {ok, list({atom(), any()})} | result_error().
 authorize(ConsumerKey, Code) ->
     call_api(authorize,
              jiffy:encode({[{consumer_key, to_binary(ConsumerKey)},
                             {code, to_binary(Code)}]}), params).
 
--spec retrieve(string(),string(),[{_,_}]) -> result_ok() | result_error().
+-spec retrieve(string(), string(), [{_,_}]) -> result_ok() | result_error().
 retrieve(ConsumerKey, AccessToken, Query) ->
     case is_valid_query(Query) of
         true ->
@@ -91,7 +92,7 @@ retrieve(ConsumerKey, AccessToken, Query) ->
             {error, {invalid_retrieve_params, Query}}
     end.
 
--spec stats(string(),string()) -> result_stats().
+-spec stats(string(), string()) -> result_stats().
 stats(ConsumerKey, AccessToken) ->
     Templates = [{total_items,    [{state,       all}]},
                  {total_unread,   [{state,       unread}]},
@@ -101,19 +102,19 @@ stats(ConsumerKey, AccessToken) ->
                  {total_videos,   [{contentType, video}]}],
     [get_stats(ConsumerKey, AccessToken, T) || T <- Templates].
 
--spec add(string(),string(),string(),string()) -> result_ok() | result_error().
+-spec add(string(), string(), string(), string()) -> result_ok() | result_error().
 add(ConsumerKey, AccessToken, Url, Tags) ->
     add(ConsumerKey, AccessToken,
         [{url, to_binary(Url)}, {tags, to_binary(Tags)}]).
 
--spec add(string(),string(),string(),string(),string()) ->
+-spec add(string(), string(), string(), string(), string()) ->
                  result_ok() | result_error().
 add(ConsumerKey, AccessToken, Url, Tags, TweetId) ->
     add(ConsumerKey, AccessToken, [{url,      to_binary(Url)},
                                    {tags,     to_binary(Tags)},
                                    {tweet_id, to_binary(TweetId)}]).
 
--spec add(string(),string(),params()) -> result_ok() | result_error().
+-spec add(string(), string(), params()) -> result_ok() | result_error().
 add(ConsumerKey, AccessToken, Query) ->
     case is_valid_param(add, Query) of
         true ->
@@ -128,7 +129,7 @@ add(ConsumerKey, AccessToken, Query) ->
             {error, {invalid_add_params, Query}}
     end.
 
--spec modify(string(),string(),params()) -> result_ok() | result_error().
+-spec modify(string(), string(), params()) -> result_ok() | result_error().
 modify(ConsumerKey, AccessToken, Query) ->
     case is_valid_param(modify, Query) of
         true ->
@@ -143,7 +144,7 @@ modify(ConsumerKey, AccessToken, Query) ->
             {error, {invalid_modify_params, Query}}
     end.
 
--spec modify(string(),string(),atom(),string()) -> result_ok() | result_error().
+-spec modify(string(), string(), atom(), string()) -> result_ok() | result_error().
 modify(ConsumerKey, AccessToken, Action, ItemId) ->
     case modify(ConsumerKey, AccessToken,
            [{actions,
@@ -155,7 +156,7 @@ modify(ConsumerKey, AccessToken, Action, ItemId) ->
             {error, {unable_to_modify, Headers}}
     end.
 
--spec delete(string(),string(),string()) -> result_ok() | result_error().
+-spec delete(string(), string(), string()) -> result_ok() | result_error().
 delete(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, delete, ItemId) of
         {ok, Headers, JsonResp} ->
@@ -164,7 +165,7 @@ delete(ConsumerKey, AccessToken, ItemId) ->
             {error, {unable_to_delete, Headers}}
     end.
 
--spec archive(string(),string(),string()) -> result_ok() | result_error().
+-spec archive(string(), string(), string()) -> result_ok() | result_error().
 archive(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, archive, ItemId) of
         {ok, Headers, JsonResp} ->
@@ -173,7 +174,7 @@ archive(ConsumerKey, AccessToken, ItemId) ->
             {error, {unable_to_delete, Headers}}
     end.
 
--spec readd(string(),string(),string()) -> result_ok() | result_error().
+-spec readd(string(), string(), string()) -> result_ok() | result_error().
 readd(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, readd, ItemId) of
         {ok, Headers, JsonResp} ->
@@ -182,7 +183,7 @@ readd(ConsumerKey, AccessToken, ItemId) ->
             {error, {unable_to_readd, Headers}}
     end.
 
--spec favorite(string(),string(),string()) -> result_ok() | result_error().
+-spec favorite(string(), string(), string()) -> result_ok() | result_error().
 favorite(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, favorite, ItemId) of
         {ok, Headers, JsonResp} ->
@@ -191,7 +192,7 @@ favorite(ConsumerKey, AccessToken, ItemId) ->
             {error, {unable_to_favorite, Headers}}
     end.
 
--spec unfavorite(string(),string(),string()) -> result_ok() | result_error().
+-spec unfavorite(string(), string(), string()) -> result_ok() | result_error().
 unfavorite(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, unfavorite, ItemId) of
         {ok, Headers, JsonResp} ->
@@ -200,7 +201,7 @@ unfavorite(ConsumerKey, AccessToken, ItemId) ->
             {error, {unable_to_unfavorite, Headers}}
     end.
 
--spec tags_add(string(),string(),string(),list(binary())) ->
+-spec tags_add(string(), string(), string(), list(binary())) ->
                       result_ok() | result_error().
 tags_add(ConsumerKey, AccessToken, ItemId, Tags) ->
     case modify_tags(ConsumerKey, AccessToken, tags_add, ItemId, Tags) of
@@ -210,7 +211,7 @@ tags_add(ConsumerKey, AccessToken, ItemId, Tags) ->
             {error, {unable_to_tags_add, Headers}}
     end.
 
--spec tags_remove(string(),string(),string(),list(binary())) ->
+-spec tags_remove(string(), string(), string(), list(binary())) ->
                          result_ok() | result_error().
 tags_remove(ConsumerKey, AccessToken, ItemId, Tags) ->
     case modify_tags(ConsumerKey, AccessToken, tags_remove, ItemId, Tags) of
@@ -220,7 +221,7 @@ tags_remove(ConsumerKey, AccessToken, ItemId, Tags) ->
             {error, {unable_to_tags_remove, Headers}}
     end.
 
--spec tags_replace(string(),string(),string(),list(binary())) ->
+-spec tags_replace(string(), string(), string(), list(binary())) ->
                           result_ok() | result_error().
 tags_replace(ConsumerKey, AccessToken, ItemId, Tags) ->
     case modify_tags(ConsumerKey, AccessToken, tags_replace, ItemId, Tags) of
@@ -230,7 +231,7 @@ tags_replace(ConsumerKey, AccessToken, ItemId, Tags) ->
             {error, {unable_to_tags_replace, Headers}}
     end.
 
--spec tags_clear(string(),string(),string()) ->
+-spec tags_clear(string(), string(), string()) ->
                         result_ok() | result_error().
 tags_clear(ConsumerKey, AccessToken, ItemId) ->
     case modify(ConsumerKey, AccessToken, tags_clear, ItemId) of
@@ -240,7 +241,7 @@ tags_clear(ConsumerKey, AccessToken, ItemId) ->
             {error, {unable_to_tags_clear, Headers}}
     end.
 
--spec tag_rename(string(),string(),string(),string(),string()) ->
+-spec tag_rename(string(), string(), string(), string(), string()) ->
                         result_ok() | result_error().
 tag_rename(ConsumerKey, AccessToken, ItemId, OldTag, NewTag) ->
     case modify(ConsumerKey, AccessToken,
@@ -261,7 +262,7 @@ tag_rename(ConsumerKey, AccessToken, ItemId, OldTag, NewTag) ->
 is_valid_query(Filters) ->
     is_valid_param(retrieve, Filters).
 
--spec is_valid_param(atom(),params()) -> boolean().
+-spec is_valid_param(atom(), params()) -> boolean().
 is_valid_param(Type, Filters) ->
     not lists:member(false, [validate_filter(Type, F) || F <- Filters]).
 
