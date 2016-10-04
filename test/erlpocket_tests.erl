@@ -48,6 +48,9 @@ erlpocket_test_() ->
 %% =============================================================================
 test_oauth() ->
     Keys = read_api_keys(),
+
+    ok = maybe_mock_api_call(request_token, [], <<"code=foobar">>),
+
     Url = "http://https://github.com/tgrk/erlpocket/",
     {ok, _Headers, [{code, Code}]} =
         erlpocket:request_token(get_val(consumer_key, Keys), Url),
@@ -348,6 +351,8 @@ get_response(unauthorized, _Args) ->
     build_raw_response(403, [], []);
 get_response(badformat, _Args) ->
     build_raw_response(400, [], []);
+get_response(request_token, Args) ->
+    build_raw_response(200, [], Args);
 get_response(retrieve, Args) ->
     Payload = #{<<"status">>   => 2,
                 <<"complete">> => 1,
@@ -363,6 +368,8 @@ get_response(modify, _Args) ->
 get_response(_Type, _Args) ->
     build_raw_response(200, [], []).
 
+build_raw_response(Code, Headers, Params) when is_binary(Params) ->
+    {ok, {{undefined, Code, undefined}, Headers, binary_to_list(Params)}};
 build_raw_response(Code, Headers, Response) ->
     {ok, {{undefined, Code, undefined}, Headers, jiffy:encode(Response)}}.
 
