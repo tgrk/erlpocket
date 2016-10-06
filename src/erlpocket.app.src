@@ -9,9 +9,7 @@
                     ssl,
                     inets
                    ]},
-   {env, [{return_maps, false},
-          {verbose,     false}
-         ]},
+   {env, [{verbose, false}]},
    {maintainers,["Martin Wiso"]},
    {licenses,["MIT"]},
    {links,[{"Github","https://github.com/tgrk/erlpocket"}]}
