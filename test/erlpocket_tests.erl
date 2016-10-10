@@ -49,70 +49,65 @@ erlpocket_test_() ->
 test_oauth() ->
     Keys = read_api_keys(),
 
-    ok = maybe_mock_api_call(request_token, [], <<"code=foobar">>),
+    ok = maybe_mock_api_call(request_token, #{}, <<"code=foobar">>),
 
-    Url = "http://https://github.com/tgrk/erlpocket/",
-    {ok, _Headers, [{code, Code}]} =
-        erlpocket:request_token(get_val(consumer_key, Keys), Url),
+    Url = <<"http://https://github.com/tgrk/erlpocket/">>,
+    {ok, _Headers, Map} = erlpocket:request_token(
+                            maps:get(consumer_key, Keys), Url),
 
+    Code = maps:get(code, Map),
     AuthUrl = erlpocket:get_authorize_url(Code, Url),
-    [_, Args] = string:tokens(AuthUrl, "?"),
-    [Arg1, Arg2] = string:tokens(Args, "&"),
-    ?assertEqual("request_token=" ++ Code, Arg1),
-    ?assertEqual("redirect_uri=" ++ Url, Arg2),
+    [_, Args] = binary:split(AuthUrl, <<"?">>),
+    [Arg1, Arg2] = binary:split(Args, <<"&">>),
+    ?assertEqual(<<"request_token=", (Code)/binary>>, Arg1),
+    ?assertEqual(<<"redirect_uri=", (Url)/binary>>, Arg2),
 
-    ok = maybe_mock_api_call(authorize, []),
+    ok = maybe_mock_api_call(authorize, #{}),
 
     %% since we didn't click on authorization url, final oAuth step should fail
     ?assertEqual(
        {error,{invalid_consumer_key,
-            [{"x-error","User rejected code."},
-             {"x-error-code","158"},
-             {"x-limit-key-limit",[]},
-             {"x-limit-key-remaining",[]},
-             {"x-limit-key-reset",[]},
-             {"x-limit-user-limit",[]},
-             {"x-limit-user-remaining",[]},
-             {"x-limit-user-reset",[]},
-             {"x-source","Pocket"}]}},
-       erlpocket:authorize(get_val(consumer_key, Keys), Code)).
+               #{<<"x-error">>      => <<"User rejected code.">>,
+                 <<"x-error-code">> => <<"158">>,
+                 <<"x-source">>     => <<"Pocket">>}}},
+       erlpocket:authorize(maps:get(consumer_key, Keys), Code)).
 
 test_unauth_get() ->
     Keys = read_api_keys(),
 
-    ok = maybe_mock_api_call(unauthorized, []),
+    ok = maybe_mock_api_call(unauthorized, #{}),
 
-    {Result, _} = erlpocket:retrieve(get_val(consumer_key, Keys), "foo", []),
+    {Result, _} = erlpocket:retrieve(maps:get(consumer_key, Keys), <<"foo">>, #{}),
     ?assertEqual(error, Result).
 
 test_get_all() ->
     {CKey, AToken} = credentials(),
 
-    ok = maybe_mock_api_call(retrieve, []),
+    ok = maybe_mock_api_call(retrieve, #{}),
 
-    {Result, _, _} = erlpocket:retrieve(CKey, AToken, []),
+    {Result, _, _} = erlpocket:retrieve(CKey, AToken, #{}),
 
     ?assertEqual(ok, Result).
 
 test_validate_params() ->
-    ?assertEqual(true, erlpocket:is_valid_param(add, [{url, "http://foobar"}])),
-    ?assertEqual(true, erlpocket:is_valid_param(modify, [{action, tags_clear}])),
-    ?assertEqual(false, erlpocket:is_valid_query([{url, "http://foobar"}])),
-    ?assertEqual(false, erlpocket:is_valid_param(modify, [{foo, tags_clear}])).
+    ?assertEqual(true,  erlpocket:is_valid_param(add,    #{url => <<"http://foobar">>})),
+    ?assertEqual(true,  erlpocket:is_valid_param(modify, #{action => tags_clear})),
+    ?assertEqual(false, erlpocket:is_valid_query(#{url => <<"http://foobar">>})),
+    ?assertEqual(false, erlpocket:is_valid_param(modify, #{foo => tags_clear})).
 
 test_invalid_params_check() ->
     {CKey, AToken} = credentials(),
 
-    ok = maybe_mock_api_call(badformat, []),
+    ok = maybe_mock_api_call(badformat, #{}),
 
-    ?assertEqual({error,{invalid_retrieve_params,[{foo,bar}]}},
-                 erlpocket:retrieve(CKey, AToken, [{foo, bar}])),
+    ?assertEqual({error, invalid_params},
+                 erlpocket:retrieve(CKey, AToken, #{foo => bar})),
 
-    ?assertEqual({error,{invalid_add_params,[{foo,bar}]}},
-                 erlpocket:add(CKey, AToken, [{foo, bar}])),
+    ?assertEqual({error, invalid_params},
+                  erlpocket:add(CKey, AToken, #{foo => bar})),
 
-    ?assertEqual({error,{invalid_modify_params,[{foo,bar}]}},
-                 erlpocket:modify(CKey, AToken, [{foo, bar}])).
+    ?assertEqual({error, invalid_params},
+                 erlpocket:modify(CKey, AToken, #{foo => bar})).
 
 test_maps_support() ->
     {CKey, AToken} = credentials(),
@@ -121,9 +116,9 @@ test_maps_support() ->
 
     ?assertEqual({ok, true}, application:get_env(erlpocket, return_maps)),
 
-    ok = maybe_mock_api_call(retrieve, []),
+    ok = maybe_mock_api_call(retrieve, #{}),
 
-    {ok, Headers, Results} = erlpocket:retrieve(CKey, AToken, [{state, archive}]),
+    {ok, Headers, Results} = erlpocket:retrieve(CKey, AToken, #{state => archive}),
 
     ?assert(erlang:is_map(Headers)),
     ?assert(erlang:is_map(Results)),
@@ -134,56 +129,62 @@ test_maps_support() ->
 test_get_unreaded() ->
     {CKey, AToken} = credentials(),
 
-    ok = maybe_mock_api_call(retrieve, {state, unread}),
+    Param = #{state => unread},
 
-    {Result, _, _} = erlpocket:retrieve(CKey, AToken, [{state, unread}]),
+    ok = maybe_mock_api_call(retrieve, Param),
+
+    {Result, _, _} = erlpocket:retrieve(CKey, AToken, Param),
 
     ?assertEqual(ok, Result).
 
 test_get_archive() ->
     {CKey, AToken} = credentials(),
 
-    ok = maybe_mock_api_call(retrieve, {state, archive}),
+    Param = #{state => archive},
 
-    {Result, _, _} = erlpocket:retrieve(CKey, AToken, [{state, archive}]),
+    ok = maybe_mock_api_call(retrieve, Param),
+
+    {Result, _, _} = erlpocket:retrieve(CKey, AToken, Param),
 
     ?assertEqual(ok, Result).
 
 test_get_favourite() ->
     {CKey, AToken} = credentials(),
 
-    ok = maybe_mock_api_call(retrieve, {favorite, 1}),
+    Param = #{favorite => 1},
 
-    {Result, _, _} = erlpocket:retrieve(CKey, AToken, [{favorite, 1}]),
+    ok = maybe_mock_api_call(retrieve, Param),
+
+    {Result, _, _} = erlpocket:retrieve(CKey, AToken, Param),
 
     ?assertEqual(ok, Result).
 
 test_get_by_tag() ->
     {CKey, AToken} = credentials(),
 
-    ok = maybe_mock_api_call(retrieve, {tag, erlang}),
+    Param = #{tag => <<"erlang">>},
 
-    {Result, _, _} = erlpocket:retrieve(CKey, AToken, [{tag, erlang}]),
+    ok = maybe_mock_api_call(retrieve, Param),
+
+    {Result, _, _} = erlpocket:retrieve(CKey, AToken, Param),
+
     ?assertEqual(ok, Result).
 
 test_get_stats() ->
     {CKey, AToken} = credentials(),
 
-    ok = maybe_mock_api_call(stats, []),
+    ok = maybe_mock_api_call(stats, #{}),
 
-    Result = erlpocket:stats(CKey, AToken),
+    {ok, Result} = erlpocket:stats(CKey, AToken),
+    ExpectedKeys = [total_items, total_unread, total_archive, total_favorite,
+                    total_articles, total_videos],
 
-    ?assertMatch([{total_items, _},
-                  {total_unread, _},
-                  {total_archive, _},
-                  {total_favorite, _},
-                  {total_articles, _},
-                  {total_videos, _}], Result).
+    ?assertEqual(lists:sort(ExpectedKeys), lists:sort(maps:keys(Result))).
 
 test_add() ->
     {CKey, AToken} = credentials(),
 
-    ok = maybe_mock_api_call(add, []),
+    ok = maybe_mock_api_call(add, #{}),
 
     {Result, _, _} = erlpocket:add(CKey, AToken, "http://www.erlang.org/", "test"),
 
@@ -192,9 +193,9 @@ test_add() ->
 test_favorite() ->
     {CKey, AToken} = Creds = credentials(),
 
-    [{ItemId, _} | _] = search_item(Creds),
+    ItemId = search_item(Creds),
 
-    ok = maybe_mock_api_call(modify, []),
+    ok = maybe_mock_api_call(modify, #{}),
 
     Result1 = erlpocket:favorite(CKey, AToken, ItemId),
     assert_action_response(true, 1, Result1),
@@ -206,23 +207,24 @@ test_favorite() ->
 test_archive() ->
     {CKey, AToken} = Creds = credentials(),
 
-    [{ItemId, _} | _] = search_item(Creds),
+    ItemId = search_item(Creds),
 
-    ok = maybe_mock_api_call(modify, []),
+    ok = maybe_mock_api_call(modify, #{}),
 
     Result1 = erlpocket:archive(CKey, AToken, ItemId),
     assert_action_response(true, 1, Result1),
 
     Result2 = erlpocket:readd(CKey, AToken, ItemId),
     assert_action_response(match, 1, Result2),
+
     ok.
 
 test_tags_add() ->
     {CKey, AToken} = Creds = credentials(),
 
-    [{ItemId, _} | _] = search_item(Creds),
+    ItemId = search_item(Creds),
 
-    ok = maybe_mock_api_call(modify, []),
+    ok = maybe_mock_api_call(modify, #{}),
 
     Result = erlpocket:tags_add(CKey, AToken, ItemId, [<<"test">>, <<"test2">>]),
     assert_action_response(true, 1, Result),
@@ -231,23 +233,21 @@ test_tags_add() ->
 test_tags_remove() ->
     {CKey, AToken} = Creds = credentials(),
 
-    [{ItemId, _} | _] = search_item(Creds),
+    ItemId = search_item(Creds),
 
-    ok = maybe_mock_api_call(modify, []),
+    ok = maybe_mock_api_call(modify, #{}),
 
     Result = erlpocket:tags_remove(CKey, AToken, ItemId, [<<"test2">>]),
     assert_action_response(true, 1, Result),
 
-
-    ?assertEqual([], search_item(Creds, <<"test2">>)),
     ok.
 
 test_tags_replace() ->
     {CKey, AToken} = Creds = credentials(),
 
-    [{ItemId, _} | _] = search_item(Creds),
+    ItemId = search_item(Creds),
 
-    ok = maybe_mock_api_call(modify, []),
+    ok = maybe_mock_api_call(modify, #{}),
 
     Result = erlpocket:tags_replace(CKey, AToken, ItemId, [<<"test3">>]),
     assert_action_response(true, 1, Result),
@@ -256,34 +256,33 @@ test_tags_replace() ->
 test_tag_rename() ->
     {CKey, AToken} = Creds = credentials(),
 
-    [{ItemId, _} | _] = search_item(Creds),
+    ItemId = search_item(Creds),
 
-    ok = maybe_mock_api_call(modify, []),
+    ok = maybe_mock_api_call(modify, #{}),
 
     Result = erlpocket:tag_rename(CKey, AToken, ItemId, <<"test3">>, <<"test4">>),
     assert_action_response(true, 1, Result),
-    %%?assertNotEqual([], search_item(Keys, <<"test4">>)),
+
     ok.
 
 test_modify_tags_clear() ->
     {CKey, AToken} = Creds = credentials(),
 
-    [{ItemId, _} | _] = search_item(Creds),
+    ItemId = search_item(Creds),
 
-    ok = maybe_mock_api_call(modify, []),
+    ok = maybe_mock_api_call(modify, #{}),
 
     Result = erlpocket:tags_clear(CKey, AToken, ItemId),
     assert_action_response(true, 1, Result),
 
-    ?assertEqual([], search_item(Creds, <<"test">>)),
     ok.
 
 test_modify_delete() ->
     {CKey, AToken} = Creds = credentials(),
 
-    [{ItemId, _} | _] = search_item(Creds),
+    ItemId = search_item(Creds),
 
-    ok = maybe_mock_api_call(modify, []),
+    ok = maybe_mock_api_call(modify, #{}),
 
     Result = erlpocket:delete(CKey, AToken, ItemId),
     assert_action_response(true, 1, Result),
@@ -304,7 +303,7 @@ maybe_unmock_api(false) ->
     meck:unload(httpc).
 
 maybe_mock_api_call(Type, Params) ->
-    maybe_mock_api_call(Type, Params, []).
+    maybe_mock_api_call(Type, Params, #{}).
 
 maybe_mock_api_call(Type, Params, Args) ->
     case has_api_key() of
@@ -318,16 +317,18 @@ maybe_mock_api_call(Type, Params, Args) ->
                       %% maybe match request url
                       case lists:member(Type, IgnoreTypes) of
                           true  -> ignore;
-                          false -> ?assertEqual(erlpocket:get_url(Type), Url)
+                          false -> ?assertEqual(erlpocket:get_url(Type), list_to_binary(Url))
                       end,
 
                       %% maybe match request params and payload
-                      case Params of
-                          {Key, Value} ->
+                      case maps:size(Params) > 0 of
+                          true ->
+                              %%TODO: this expects only one param and is not ideal
+                              [{Key, Value}] = maps:to_list(Params),
                               Map = jiffy:decode(Json, [return_maps]),
                               ?assertEqual(erlpocket:to_binary(Value),
                                            maps:get(erlpocket:to_binary(Key), Map));
-                          [] ->
+                          false ->
                               ignore
                       end,
                       get_response(Type, Args)
@@ -337,20 +338,14 @@ maybe_mock_api_call(Type, Params, Args) ->
     end.
 
 get_response(authorize, _Args) ->
-    Headers = [{"x-error","User rejected code."},
-               {"x-error-code","158"},
-               {"x-limit-key-limit",[]},
-               {"x-limit-key-remaining",[]},
-               {"x-limit-key-reset",[]},
-               {"x-limit-user-limit",[]},
-               {"x-limit-user-remaining",[]},
-               {"x-limit-user-reset",[]},
-               {"x-source","Pocket"}],
-    build_raw_response(403, Headers, []);
+    Headers = #{"x-error"      => "User rejected code.",
+                "x-error-code" => "158",
+                "x-source"     => "Pocket"},
+    build_raw_response(403, maps:to_list(Headers), #{});
 get_response(unauthorized, _Args) ->
-    build_raw_response(403, [], []);
+    build_raw_response(403, [], #{});
 get_response(badformat, _Args) ->
-    build_raw_response(400, [], []);
+    build_raw_response(400, [], #{});
 get_response(request_token, Args) ->
     build_raw_response(200, [], Args);
 get_response(retrieve, Args) ->
@@ -366,7 +361,7 @@ get_response(modify, _Args) ->
                },
     build_raw_response(200, [], Payload);
 get_response(_Type, _Args) ->
-    build_raw_response(200, [], []).
+    build_raw_response(200, [], #{}).
 
 build_raw_response(Code, Headers, Params) when is_binary(Params) ->
     {ok, {{undefined, Code, undefined}, Headers, binary_to_list(Params)}};
@@ -376,51 +371,33 @@ build_raw_response(Code, Headers, Response) ->
 read_api_keys() ->
     case file:consult("api.txt") of
         {ok, [Keys]} -> Keys;
-        _ -> []
+        _ -> #{consumer_key => <<>>, access_token => <<>>}
     end.
 
 has_api_key() ->
     filelib:is_regular("api.txt").
 
-assert_action_response(match, ExpectedStatus, {Code, _Headers, {Result}}) ->
+assert_action_response(true, ExpectedStatus, {Code, _Headers, Result}) ->
     ?assertEqual(ok, Code),
-    ?assertMatch([_], get_val(<<"action_results">>, Result)),
-    ?assertEqual(ExpectedStatus, get_val(<<"status">>, Result)),
+    ?assertEqual([true], maps:get(<<"action_results">>, Result)),
+    ?assertEqual(ExpectedStatus,   maps:get(<<"status">>, Result)),
     ok;
-assert_action_response(ExpectedResult, ExpectedStatus, {Code, _Headers, {Result}}) ->
+assert_action_response(_ExpectedResult, ExpectedStatus, {Code, _Headers, Result}) ->
     ?assertEqual(ok, Code),
-    ?assertEqual([ExpectedResult], get_val(<<"action_results">>, Result)),
-    ?assertEqual(ExpectedStatus, get_val(<<"status">>, Result)),
+    ?assertMatch([_], maps:get(<<"action_results">>, Result)),
+    ?assertEqual(ExpectedStatus,   maps:get(<<"status">>, Result)),
     ok.
 
 credentials() ->
-    Keys = read_api_keys(),
-    {get_val(consumer_key, Keys), get_val(access_token, Keys)}.
+    Map = read_api_keys(),
+    {maps:get(consumer_key, Map), maps:get(access_token, Map)}.
 
 search_item({CKey, AToken}) ->
-    ok = maybe_mock_api_call(retrieve, [], #{<<"fooId">> => #{}}),
+    ok = maybe_mock_api_call(retrieve, #{}, #{<<"fooId">> => #{}}),
 
-    {ok, _, PL} = erlpocket:retrieve(CKey, AToken, [{search, <<"Erlang Programming Language">>}]),
+    {ok, _, Map} = erlpocket:retrieve(
+                    CKey, AToken, #{search => <<"Erlang Programming Language">>}),
+    hd(maps:keys(parse_results(Map))).
 
-    parse_results(PL).
-
-search_item({CKey, AToken}, Tag) ->
-    ok = maybe_mock_api_call(retrieve, [], []),
-
-    {ok, _, PL} = erlpocket:retrieve(CKey, AToken, [{search, <<"Erlang Programming Language">>},
-                                                    {tag, Tag}]),
-    parse_results(PL).
-
-parse_results({PL}) ->
-    case get_val(<<"list">>, PL)  of
-        []      -> [];
-        {Items} -> lists:map(fun parse_result/1, Items)
-    end.
-
-parse_result([]) ->
-    [];
-parse_result({ItemId, {Item}}) ->
-    {ItemId, Item}.
-
-get_val(Key, PL) ->
-    proplists:get_value(Key, PL).
+parse_results(Map) ->
+    maps:get(<<"list">>, Map).

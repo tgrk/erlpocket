@@ -17,6 +17,10 @@ or
 $ rebar get-deps compile
 ```
 
+## Changes with version 2.x.x
+New version breaks backward compatiblity due to replacing old jiffy style proplists with maps. This should be more convenient to
+use with latest versions of Erlang. Another change is to favor binary input over string input eg. for url when calling add API.
+
 ## Quick start
 
 To run all required dependencies start with:
@@ -35,9 +39,9 @@ First you have to [register][3] your application to get consumer key.
 
 #### Obtain a request token
 ```erlang
-RedirectUri = "http://www.foo.com/",
-ConsumerKey = "<app-consumer-key>",
-{ok, [{code, Code}]} = erlpocket:request_token(ConsumerKey, RedirectUri).
+RedirectUri = <<"http://www.foo.com/">>,
+ConsumerKey = <<"app-consumer-key">>,
+{ok, #{code := Code}} = erlpocket:request_token(ConsumerKey, RedirectUri).
 ```
 Use returned security token(code) to get URL that will authorize your
 application on Pocket website.
@@ -47,7 +51,7 @@ Url = erlpocket:get_authorize_url(Code, RedirectUri).
 
 #### Convert a request code into Pocket access token
 ```erlang
-{ok, [{access_token, AccessToken},{username, Username}]} = erlpocket:authorize(ConsumerKey, Code).
+{ok, #{access_token := AccessToken, username := Username}} = erlpocket:authorize(ConsumerKey, Code).
 ```
 
 ### Working with content API
@@ -57,13 +61,13 @@ After sucessfull authentication you are ready call add/modify and retrieve funct
 
 You can also get content statistics, but it is just call on top of retrieve so it can take quite some time.
 ```erlang
-Stats = erlpocket:stats(ConsumerKey, AccessToken).
+{ok, Stats} = erlpocket:stats(ConsumerKey, AccessToken).
 ```
 
 Validate API params:
 ```erlang
-true = erlpocket:is_valid_param(add, [{title, "Foobar"}, {url, "http://foobar"}]).
-true = erlpocket:is_valid_param(retrieve, [{tag, "Foobar"}]).
+true = erlpocket:is_valid_param(add, #{title => <<"Foobar">>, url => <<"http://foobar">>}).
+true = erlpocket:is_valid_param(retrieve, #{tag => <<"Foobar">>}).
 ```
 
 #### Retrieve API
@@ -74,13 +78,13 @@ Query = [{tag, erlang}].
 ```
 To validate retrieve query there is a helper:
 ```erlang
-true = erlpocket:is_valid_query([{contentType, video}]).
+true = erlpocket:is_valid_query(#{contentType => video}).
 ```
 
 #### Add API
 [Add][5] new content simply by calling:
 ```erlang
-{ok, {[{<<"item">, _}]}} = erlpocket:add(ConsumerKey, AccessToken, "http://foobar/").
+{ok, #{<<"item"> := _}} = erlpocket:add(ConsumerKey, AccessToken, <<"http://foobar/">>).
 ```
 or function with different arrity.
 
@@ -91,64 +95,64 @@ or function with different arrity.
 Delete an existing content:
 ```erlang
 ItemId = "123",
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:delete(ConsumerKey, AccessToken, ItemId).
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:delete(ConsumerKey, AccessToken, ItemId).
 ```
 
 Archive an existing content:
 ```erlang
-ItemId = "123",
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:archive(ConsumerKey, AccessToken, ItemId).
+ItemId = <<"123">>,
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:archive(ConsumerKey, AccessToken, ItemId).
 ```
 
 Mark an existing content as unread:
 ```erlang
-ItemId = "123",
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:readd(ConsumerKey, AccessToken, ItemId).
+ItemId = <<"123">>,
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:readd(ConsumerKey, AccessToken, ItemId).
 ```
 
 Mark an existing content as favorite:
 ```erlang
-ItemId = "123",
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:favorite(ConsumerKey, AccessToken, ItemId).
+ItemId = <<"123">>,
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:favorite(ConsumerKey, AccessToken, ItemId).
 ```
 
 Remove an existing content from favorites:
 ```erlang
-ItemId = "123",
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:unfavorite(ConsumerKey, AccessToken, ItemId).
+ItemId = <<"123">>,
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:unfavorite(ConsumerKey, AccessToken, ItemId).
 ```
 
 Add multiple tags to existing item:
 ```erlang
-ItemId = "123",
+ItemId = <<"123">>,
 Tags = [<<"foo">>, <<"bar">>],
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:tags_add(ConsumerKey, AccessToken, ItemId, Tags).
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:tags_add(ConsumerKey, AccessToken, ItemId, Tags).
 ````
 
 Remove multiple tags from an existing item:
 ```erlang
 ItemId = "123",
 Tags = [<<"foo">>],
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:tags_remove(ConsumerKey, AccessToken, ItemId, Tags).
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:tags_remove(ConsumerKey, AccessToken, ItemId, Tags).
 ````
 
 Replace multiple tags from an existing item:
 ```erlang
-ItemId = "123",
+ItemId = <<"123">>,
 NewTags = [<<"foo1">>, <<"bar1">>],
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:tags_replace(ConsumerKey, AccessToken, ItemId, NewTags).
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:tags_replace(ConsumerKey, AccessToken, ItemId, NewTags).
 ````
 
 Remove multiple tags from an existing item:
 ```erlang
-ItemId = "123",
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:tags_clear(ConsumerKey, AccessToken, ItemId).
+ItemId = <<"123">>,
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:tags_clear(ConsumerKey, AccessToken, ItemId).
 ````
 
 Rename tag of an existing item:
 ```erlang
-ItemId = "123",
-{ok,{[{<<"action_results">>,[true]},{<<"status">>,1}]}} = erlpocket:tag_rename(ConsumerKey, AccessToken, ItemId, <<"foo">>, <<"foo1">>).
+ItemId = <<"123">>,
+{ok, #{<<"action_results">> := [true], <<"status">> := 1}} = erlpocket:tag_rename(ConsumerKey, AccessToken, ItemId, <<"foo">>, <<"foo1">>).
 ````
 
 ## Example
