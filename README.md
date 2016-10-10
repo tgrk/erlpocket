@@ -73,8 +73,7 @@ true = erlpocket:is_valid_param(retrieve, #{tag => <<"Foobar">>}).
 #### Retrieve API
 To [get][4] content use following call:
 ```erlang
-Query = [{tag, erlang}].
-{ok, Response} = erlpocket:retrieve(ConsumerKey, AccessToken, Query).
+{ok, Response} = erlpocket:retrieve(ConsumerKey, AccessToken, #{tag => <<"erlang">>}).
 ```
 To validate retrieve query there is a helper:
 ```erlang
