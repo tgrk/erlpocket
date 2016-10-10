@@ -64,6 +64,8 @@ test_oauth() ->
 
     ok = maybe_mock_api_call(authorize, #{}),
 
+    ok = maybe_mock_api_call(authorize, []),
+
     %% since we didn't click on authorization url, final oAuth step should fail
     ?assertEqual(
        {error,{invalid_consumer_key,
@@ -130,7 +132,9 @@ test_get_unreaded() ->
     {CKey, AToken} = credentials(),
 
     Param = #{state => unread},
+
     ok = maybe_mock_api_call(retrieve, Param),
+
     {Result, _, _} = erlpocket:retrieve(CKey, AToken, Param),
 
     ?assertEqual(ok, Result).
@@ -139,7 +143,9 @@ test_get_archive() ->
     {CKey, AToken} = credentials(),
 
     Param = #{state => archive},
+
     ok = maybe_mock_api_call(retrieve, Param),
+
     {Result, _, _} = erlpocket:retrieve(CKey, AToken, Param),
 
     ?assertEqual(ok, Result).
@@ -148,7 +154,9 @@ test_get_favourite() ->
     {CKey, AToken} = credentials(),
 
     Param = #{favorite => 1},
+
     ok = maybe_mock_api_call(retrieve, Param),
+
     {Result, _, _} = erlpocket:retrieve(CKey, AToken, Param),
 
     ?assertEqual(ok, Result).
@@ -157,7 +165,9 @@ test_get_by_tag() ->
     {CKey, AToken} = credentials(),
 
     Param = #{tag => <<"erlang">>},
+
     ok = maybe_mock_api_call(retrieve, Param),
+
     {Result, _, _} = erlpocket:retrieve(CKey, AToken, Param),
 
     ?assertEqual(ok, Result).
@@ -177,6 +187,7 @@ test_add() ->
     {CKey, AToken} = credentials(),
 
     ok = maybe_mock_api_call(add, #{}),
+
     {Result, _, _} = erlpocket:add(CKey, AToken, "http://www.erlang.org/", "test"),
 
     ?assertEqual(ok, Result).
@@ -206,7 +217,8 @@ test_archive() ->
     assert_action_response(true, 1, Result1),
 
     Result2 = erlpocket:readd(CKey, AToken, ItemId),
-    assert_action_response(item, 1, Result2),
+    assert_action_response(match, 1, Result2),
+
     ok.
 
 test_tags_add() ->
@@ -252,7 +264,6 @@ test_tag_rename() ->
 
     Result = erlpocket:tag_rename(CKey, AToken, ItemId, <<"test3">>, <<"test4">>),
     assert_action_response(true, 1, Result),
-    %%?assertNotEqual([], search_item(Keys, <<"test4">>)),
 
     ok.
 
@@ -265,6 +276,7 @@ test_modify_tags_clear() ->
 
     Result = erlpocket:tags_clear(CKey, AToken, ItemId),
     assert_action_response(true, 1, Result),
+
     ok.
 
 test_modify_delete() ->
@@ -387,7 +399,6 @@ search_item({CKey, AToken}) ->
 
     {ok, _, Map} = erlpocket:retrieve(
                     CKey, AToken, #{search => <<"Erlang Programming Language">>}),
-
     hd(maps:keys(parse_results(Map))).
 
 parse_results(Map) ->

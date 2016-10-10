@@ -105,7 +105,6 @@ stats(ConsumerKey, AccessToken) ->
                      end, Templates),
     {ok, Stats}.
 
-%%TODO: check types
 -spec add(oauth_key(), oauth_token(), url(), tag()) ->
                  result_ok() | result_error().
 add(ConsumerKey, AccessToken, Url, Tags) ->
