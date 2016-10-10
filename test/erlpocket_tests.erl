@@ -361,7 +361,7 @@ build_raw_response(Code, Headers, Response) ->
 read_api_keys() ->
     case file:consult("api.txt") of
         {ok, [Keys]} -> Keys;
-        _ -> []
+        _ -> #{consumer_key => <<>>, access_token => <<>>}
     end.
 
 has_api_key() ->
