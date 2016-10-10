@@ -206,7 +206,7 @@ test_archive() ->
     assert_action_response(true, 1, Result1),
 
     Result2 = erlpocket:readd(CKey, AToken, ItemId),
-    assert_action_response(true, 1, Result2),
+    assert_action_response(item, 1, Result2),
     ok.
 
 test_tags_add() ->
@@ -367,9 +367,14 @@ read_api_keys() ->
 has_api_key() ->
     filelib:is_regular("api.txt").
 
+assert_action_response(true, ExpectedStatus, {Code, _Headers, Result}) ->
+    ?assertEqual(ok, Code),
+    ?assertEqual([true], maps:get(<<"action_results">>, Result)),
+    ?assertEqual(ExpectedStatus,   maps:get(<<"status">>, Result)),
+    ok;
 assert_action_response(_ExpectedResult, ExpectedStatus, {Code, _Headers, Result}) ->
     ?assertEqual(ok, Code),
-    ?assertMatch([_ExpectedResult], maps:get(<<"action_results">>, Result)),
+    ?assertMatch([_], maps:get(<<"action_results">>, Result)),
     ?assertEqual(ExpectedStatus,   maps:get(<<"status">>, Result)),
     ok.
 
