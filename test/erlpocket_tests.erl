@@ -64,8 +64,6 @@ test_oauth() ->
 
     ok = maybe_mock_api_call(authorize, #{}),
 
-    ok = maybe_mock_api_call(authorize, []),
-
     %% since we didn't click on authorization url, final oAuth step should fail
     ?assertEqual(
        {error,{invalid_consumer_key,
