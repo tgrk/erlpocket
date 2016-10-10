@@ -1,6 +1,6 @@
 {application, erlpocket,
    [{description, "Erlang library for Pocket API"},
-    {vsn, "1.2.2"},
+    {vsn, "2.0.0"},
     {registered, []},
     {applications, [stdlib,
                     kernel,
