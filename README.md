@@ -1,14 +1,14 @@
 [![Build Status](https://travis-ci.org/tgrk/erlpocket.svg?branch=master)](https://travis-ci.org/tgrk/erlpocket)
 [![Hex pm](http://img.shields.io/hexpm/v/erlpocket.svg?style=flat)](https://hex.pm/packages/erlpocket)
 
-elrpocket
+erlpocket
 =========
 
-An Erlang library for Pocket API (www.getpocket.com) v3. For more details see [documentation][1].
+An Erlang library for Pocket API (www.getpocket.com) v3. For more details see [documentation][1]. 
 
 ## Fetch dependencies and compile
 
-Project depends on [jiffy][3] library for JSON parsing.
+Project depends on [jiffy][3] library for JSON parsing and uses default HTTP client (httpc).
 ```
 $ rebar3 update compile
 ```
@@ -19,7 +19,7 @@ $ rebar get-deps compile
 
 ## Changes with version 2.x.x
 New version breaks backward compatiblity due to replacing old jiffy style proplists with maps. This should be more convenient to
-use with latest versions of Erlang. Another change is to favor binary input over string input eg. for url when calling add API.
+use with latest versions of Erlang. Another big change is that API favors binary input over string input eg. for url when calling add API.
 
 ## Quick start
 
@@ -43,7 +43,7 @@ RedirectUri = <<"http://www.foo.com/">>,
 ConsumerKey = <<"app-consumer-key">>,
 {ok, #{code := Code}} = erlpocket:request_token(ConsumerKey, RedirectUri).
 ```
-Use returned security token(code) to get URL that will authorize your
+Use returned security token (code) to get URL that will authorize your
 application on Pocket website.
 ```erlang
 Url = erlpocket:get_authorize_url(Code, RedirectUri).
