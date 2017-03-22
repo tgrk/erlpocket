@@ -2,4 +2,9 @@ language: erlang
 notifications:
   email: martin@wiso.cz
 otp_release:
-  - 18.1
+  - 18.3
+install:
+    pip install codecov
+after_success:
+    codecov
+
