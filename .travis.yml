@@ -1,7 +1,7 @@
 language: erlang
 notifications:
   email: martin@wiso.cz
-install:
+before_install:
     pip install --user codecov
 after_success:
     codecov
