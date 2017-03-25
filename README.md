@@ -1,11 +1,12 @@
 [![Build Status](https://travis-ci.org/tgrk/erlpocket.svg?branch=master)](https://travis-ci.org/tgrk/erlpocket)
 [![Hex pm](http://img.shields.io/hexpm/v/erlpocket.svg?style=flat)](https://hex.pm/packages/erlpocket)
+[![Downloads](https://img.shields.io/hexpm/dt/urilib.svg)](https://hex.pm/packages/erlpocket)
 [![codecov.io](https://codecov.io/github/tgrk/erlpocket/coverage.svg?branch=master)](https://codecov.io/github/tgrk/erlpocket?branch=master)
 
 erlpocket
 =========
 
-An Erlang library for Pocket API (www.getpocket.com) v3. For more details see [documentation][1]. 
+An Erlang library for Pocket API (www.getpocket.com) v3. For more details see [documentation][1].
 
 ## Fetch dependencies and compile
 

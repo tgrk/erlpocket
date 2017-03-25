@@ -1,10 +1,11 @@
 language: erlang
 notifications:
   email: martin@wiso.cz
+otp_release:
+  - 18.1
+script: bin/rebar3 eunit
 before_install:
     pip install --user codecov
 after_success:
-    codecov
-otp_release:
-  - 18.1
-
+  - bin/covertool -cover _build/test/cover/eunit.coverdata -appname erlpocket -output cobertura.xml
+  - codecov
