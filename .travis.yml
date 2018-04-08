@@ -2,7 +2,7 @@ language: erlang
 notifications:
   email: martin@wiso.cz
 otp_release:
-  - 18.1
+  - 20.0
 script: bin/rebar3 eunit
 before_install:
     pip install --user codecov
