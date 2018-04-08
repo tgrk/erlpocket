@@ -10,3 +10,4 @@ api.txt
 "TEST-file_\"erlpocket.app\".xml"
 _build/
 rebar.lock
+compile_commands.json
