@@ -154,97 +154,82 @@ modify(ConsumerKey, AccessToken, Query) ->
                     result_ok() | result_error().
 modify(ConsumerKey, AccessToken, Action, ItemId) ->
     Query = build_batch_query([{Action, ItemId, #{}}]),
-    modify(ConsumerKey, AccessToken, Query).
+    handle_result(
+        modify(ConsumerKey, AccessToken, Query),
+        unable_to_nodify
+    ).
 
 -spec delete(oauth_key(), oauth_token(), item_id()) ->
                     result_ok() | result_error().
 delete(ConsumerKey, AccessToken, ItemId) ->
-    case modify(ConsumerKey, AccessToken, delete, ItemId) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_delete, Headers}}
-    end.
+    handle_result(
+        modify(ConsumerKey, AccessToken, delete, ItemId),
+        unable_to_delete
+    ).
 
 -spec archive(oauth_key(), oauth_token(), item_id()) ->
                      result_ok() | result_error().
 archive(ConsumerKey, AccessToken, ItemId) ->
-    case modify(ConsumerKey, AccessToken, archive, ItemId) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_archive, Headers}}
-    end.
+    handle_result(
+        modify(ConsumerKey, AccessToken, archive, ItemId),
+        unable_to_archive
+    ).
 
 -spec readd(oauth_key(), oauth_token(), item_id()) ->
                    result_ok() | result_error().
 readd(ConsumerKey, AccessToken, ItemId) ->
-    case modify(ConsumerKey, AccessToken, readd, ItemId) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_readd, Headers}}
-    end.
+    handle_result(
+        modify(ConsumerKey, AccessToken, readd, ItemId),
+        unable_to_readd
+    ).
 
 -spec favorite(oauth_key(), oauth_token(), item_id()) ->
                       result_ok() | result_error().
 favorite(ConsumerKey, AccessToken, ItemId) ->
-    case modify(ConsumerKey, AccessToken, favorite, ItemId) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_favorite, Headers}}
-    end.
+    handle_result(
+        modify(ConsumerKey, AccessToken, favorite, ItemId),
+        unable_to_favorite
+    ).
 
 -spec unfavorite(oauth_key(), oauth_token(), item_id()) ->
                         result_ok() | result_error().
 unfavorite(ConsumerKey, AccessToken, ItemId) ->
-    case modify(ConsumerKey, AccessToken, unfavorite, ItemId) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_unfavorite, Headers}}
-    end.
+    handle_result(
+        modify(ConsumerKey, AccessToken, unfavorite, ItemId),
+        unable_to_unfavorite
+    ).
 
 -spec tags_add(oauth_key(), oauth_token(), item_id(), tags()) ->
                       result_ok() | result_error().
 tags_add(ConsumerKey, AccessToken, ItemId, Tags) ->
-    case modify_tags(ConsumerKey, AccessToken, tags_add, ItemId, Tags) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_add_tags, Headers}}
-    end.
+    handle_result(
+        modify_tags(ConsumerKey, AccessToken, tags_add, ItemId, Tags),
+        unable_to_add_tags
+    ).
 
 -spec tags_remove(oauth_key(), oauth_token(), item_id(), tags()) ->
                          result_ok() | result_error().
 tags_remove(ConsumerKey, AccessToken, ItemId, Tags) ->
-    case modify_tags(ConsumerKey, AccessToken, tags_remove, ItemId, Tags) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_remove_tags, Headers}}
-    end.
+    handle_result(
+        modify_tags(ConsumerKey, AccessToken, tags_remove, ItemId, Tags),
+        unable_to_remove_tags
+    ).
 
 -spec tags_replace(oauth_key(), oauth_token(), item_id(), tags()) ->
                           result_ok() | result_error().
 tags_replace(ConsumerKey, AccessToken, ItemId, Tags) ->
-    case modify_tags(ConsumerKey, AccessToken, tags_replace, ItemId, Tags) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_replace_tags, Headers}}
-    end.
+    handle_result(
+        modify_tags(ConsumerKey, AccessToken, tags_replace, ItemId, Tags),
+        unable_to_replace_tags
+    ).
 
 -spec tags_clear(oauth_key(), oauth_token(), item_id()) ->
                         result_ok() | result_error().
 tags_clear(ConsumerKey, AccessToken, ItemId) ->
-    case modify(ConsumerKey, AccessToken, tags_clear, ItemId) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_clear_tags, Headers}}
-    end.
+    handle_result(
+        modify(ConsumerKey, AccessToken, tags_clear, ItemId),
+        unable_to_clear_tags
+    ).
 
 -spec tag_rename(oauth_key(), oauth_token(), item_id(), tag(), tag()) ->
                         result_ok() | result_error().
@@ -252,14 +237,10 @@ tag_rename(ConsumerKey, AccessToken, ItemId, OldTag, NewTag) ->
     Args = #{old_tag => to_binary(OldTag),
              new_tag => to_binary(NewTag)},
     Query = build_batch_query([{tag_rename, ItemId, Args}]),
-    case modify(ConsumerKey, AccessToken, Query) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, {unable_to_modify, Headers}} ->
-            {error, {unable_to_raname_tags, Headers}};
-        {error, _Reason} = Error ->
-            Error
-    end.
+    handle_result(
+        modify(ConsumerKey, AccessToken, Query),
+        unable_to_rename_tags
+    ).
 
 -spec build_batch_query(list(tuple())) -> map().
 build_batch_query([Action]) ->
@@ -301,12 +282,10 @@ create_payload(ConsumerKey, AccessToken, Params) ->
 modify_tags(ConsumerKey, AccessToken, Action, ItemId, Tags) ->
     Query = build_batch_query(
               [{Action, ItemId, #{tags => ensure_binary_list(Tags)}}]),
-    case modify(ConsumerKey, AccessToken, Query) of
-        {ok, Headers, Response} ->
-            {ok, Headers, Response};
-        {error, _Reason} = Error ->
-            Error
-    end.
+    handle_result(
+        modify(ConsumerKey, AccessToken, Query),
+        unable_modify_tags
+    ).
 
 build_query_action({Action, ItemId, Args}) ->
     Defaults = #{action => Action, item_id => ItemId},
@@ -407,6 +386,15 @@ maybe_verbose(Text, Args) ->
         false ->
             ignore
     end.
+
+handle_result({ok, _Headers, _Response} = Success, _ActionReason) ->
+    Success;
+handle_result({error, invalid_params} = InvalidParamsError, _ActionReason) ->
+    InvalidParamsError;
+handle_result({error, {_Reason, Headers}}, ActionReason) ->
+    {error, {ActionReason, Headers}};
+handle_result({error, _OtherReason} = OtherError, _ActionReason) ->
+    OtherError.
 
 get_url(request_token) ->
     <<(?BASE_URL)/binary, "v3/oauth/request">>;
