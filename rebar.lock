@@ -1,10 +1,10 @@
 {"1.1.0",
 [{<<"eunit_formatters">>,{pkg,<<"eunit_formatters">>,<<"0.5.0">>},0},
- {<<"jiffy">>,{pkg,<<"jiffy">>,<<"0.15.1">>},0},
- {<<"meck">>,{pkg,<<"meck">>,<<"0.8.9">>},0}]}.
+ {<<"jiffy">>,{pkg,<<"jiffy">>,<<"1.0.1">>},0},
+ {<<"meck">>,{pkg,<<"meck">>,<<"0.8.13">>},0}]}.
 [
 {pkg_hash,[
  {<<"eunit_formatters">>, <<"6A9133943D36A465D804C1C5B6E6839030434B8879C5600D7DDB5B3BAD4CCB59">>},
- {<<"jiffy">>, <<"BE83B09388DA1A6C7E798207C9D6A1C4D71BB95FCC387D37D35861788F49AB97">>},
- {<<"meck">>, <<"64C5C0BD8BCCA3A180B44196265C8ED7594E16BCC845D0698EC6B4E577F48188">>}]}
+ {<<"jiffy">>, <<"4F25639772CA41202F41BA9C8F6CA0933554283DD4742C90651E03471C55E341">>},
+ {<<"meck">>, <<"FFEDB39F99B0B99703B8601C6F17C7F76313EE12DE6B646E671E3188401F7866">>}]}
 ].
