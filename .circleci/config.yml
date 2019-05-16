@@ -3,9 +3,12 @@ jobs:
   build:
     working_directory: erlpocket
     docker:
-      - image: erlang
+      - image: erlang:21.1
     steps:
       - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - 'e0:74:8e:9c:48:05:54:25:eb:4d:b2:2f:0e:5f:1b:3f'
       - restore_cache:
           key: build-cache-{{ checksum "rebar.lock" }}
 
