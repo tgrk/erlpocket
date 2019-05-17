@@ -1,9 +1,11 @@
 {"1.1.0",
-[{<<"eunit_formatters">>,{pkg,<<"eunit_formatters">>,<<"0.5.0">>},0},
+[{<<"covertool">>,{pkg,<<"covertool">>,<<"2.0.0">>},0},
+ {<<"eunit_formatters">>,{pkg,<<"eunit_formatters">>,<<"0.5.0">>},0},
  {<<"jiffy">>,{pkg,<<"jiffy">>,<<"1.0.1">>},0},
  {<<"meck">>,{pkg,<<"meck">>,<<"0.8.13">>},0}]}.
 [
 {pkg_hash,[
+ {<<"covertool">>, <<"2E0172F35D95AA573F113970E077FBA644DD809F450C27E88C173CA3A66FDB42">>},
  {<<"eunit_formatters">>, <<"6A9133943D36A465D804C1C5B6E6839030434B8879C5600D7DDB5B3BAD4CCB59">>},
  {<<"jiffy">>, <<"4F25639772CA41202F41BA9C8F6CA0933554283DD4742C90651E03471C55E341">>},
  {<<"meck">>, <<"FFEDB39F99B0B99703B8601C6F17C7F76313EE12DE6B646E671E3188401F7866">>}]}
