@@ -282,10 +282,7 @@ create_payload(ConsumerKey, AccessToken, Params) ->
 modify_tags(ConsumerKey, AccessToken, Action, ItemId, Tags) ->
     Query = build_batch_query(
               [{Action, ItemId, #{tags => ensure_binary_list(Tags)}}]),
-    handle_result(
-        modify(ConsumerKey, AccessToken, Query),
-        unable_modify_tags
-    ).
+    modify(ConsumerKey, AccessToken, Query).
 
 build_query_action({Action, ItemId, Args}) ->
     Defaults = #{action => Action, item_id => ItemId},
