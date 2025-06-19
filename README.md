@@ -2,6 +2,8 @@
 [![Hex pm](http://img.shields.io/hexpm/v/erlpocket.svg?style=flat)](https://hex.pm/packages/erlpocket)
 [![codecov.io](https://codecov.io/github/tgrk/erlpocket/coverage.svg?branch=master)](https://codecov.io/github/tgrk/erlpocket?branch=master)
 
+## **This project is archived as Mozilla is shutting down Pocket (read more details [here](https://getpocket.com/farewell)).**
+
 # erlpocket
 
 An Erlang library for Pocket API (www.getpocket.com) v3. For more details see [documentation][1].
